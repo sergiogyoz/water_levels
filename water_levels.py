@@ -45,6 +45,17 @@ class WaterLevels:
                 return (n-self.start_date).days;
             n=n+datetime.timedelta(days=1);
     
+    def peaks(self, fromdate,todate, window_size):
+        start=self.date_index(fromdate);
+        end=self.date_index(todate);
+        num_windows=int(((end-start)+1)/window_size);
+        peak_array=[0]*num_windows;
+        aux=0;
+        for i in range(0,num_windows):
+            peak_array[i]=max(self.wl[ aux:(aux+window_size-1) ] );
+            aux=aux+window_size;
+        return peak_array;
+    
     def plot(self,fromdate,todate):
         start=self.date_index(fromdate);
         end=self.date_index(todate);
@@ -63,7 +74,6 @@ class WaterLevels:
             locator=mdates.AutoDateLocator(maxticks=6);
         axs.xaxis.set_major_locator(locator);
         axs.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
-
         plt.subplot(2,1,2);
         plt.hist(self.wl[start:end]);
     
