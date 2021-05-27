@@ -1,26 +1,68 @@
 import csv
 import datetime
+
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as ticker
 
+import statsmodels as sm
+        
 class WaterLevels:
+    """
+    Water level data type for daily measurements and statistical analisys
+    
+    Attributes
+    ----------
+    wl : float array
+        the daily measurements of the water level
+    dates : datetime array
+        dates as datetime objects corresponding to the day of the wl measurements
+    
+    """
     
     def __init__(self,
-                 startdate=datetime.date.min,
-                 enddate=datetime.date.min,
-                 n=0,
                  waterlevels=[],
-                 datesarray=[]
+                 datesarray=[],
+                 missingdays=[datesarray[-1]]
                  ):
-        self.start_date=startdate;
-        self.end_date=enddate;
-        self.n=n;
+        """
+        Use for raw python data, if reading from a file use any of the from_(filetype) constructors
+        
+        Parameters
+        ----------
+        waterlevels: float array
+            the daily measurements of the water level
+        datesarray: datetime array
+            dates as datetime objects corresponding to the day of the wl measurements
+        missingdays: (optional) integer array
+            each entry has the last index of a continuous sequence of days, by default, by default
+            it starts with last_date    
+        """
+        self.first_date=datesarray[0];
+        self.last_date=datesarray[-1];
+        self.n=len(waterlevels);
         self.wl=waterlevels;
         self.dates=datesarray;
+        self.md=missingdays;
 
     @classmethod
-    def from_csvfile(cls,csvfile,headers=True):
+    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y",missformat=""):
+        """
+        Creates instance of WaterLevels class from two column csv file
+        
+        The first column of the csv are the dates and the second one the water levels.
+        
+        Parameters
+        ----------
+        csvfile: str
+            relative path to the csv file. 
+            e.g. "relative/path/user/data.csv"
+        headers: bool
+            (defaults to True) True if file has headers which are then removed, if only raw data then false.
+        dateformat: str
+            format of the dates on the data following the format codes for datetime.datetime.strftime. 
+            e.g. "%m/%d/%Y %H:%M"
+        """
         with open(csvfile,newline='') as csvdata:
             mydata=list(csv.reader(csvdata))
             if headers:
@@ -28,21 +70,27 @@ class WaterLevels:
             m=len(mydata);
             wl=[0]*m;
             dates=[0]*m;
+            missingdates=[];
             n=0;
             for i in range(0,m):
                 n=n+1;
                 try:
-                    dates[i]=datetime.datetime.strptime(mydata[i][0],"%m/%d/%Y").date();
+                    dates[i]=datetime.datetime.strptime(mydata[i][0],dateformat).date();
                 except ValueError:
                     print("format on entry", mydata[i][0], "is wrong");
+                
+                aux=0    
+                if
+                
                 wl[i]=float(mydata[i][1]);
-            return WaterLevels(startdate=dates[0],enddate=dates[-1],n=n,waterlevels=wl,datesarray=dates);
+                    
+            return WaterLevels(waterlevels=wl,datesarray=dates);
 
     def date_index(self,date):
-        n=self.start_date;
-        while(n<=self.end_date and n<=date):
+        n=self.first_date;
+        while(n<=self.last_date and n<=date):
             if(n==date):
-                return (n-self.start_date).days;
+                return (n-self.first_date).days;
             n=n+datetime.timedelta(days=1);
     
     def peaks(self, fromdate,todate, window_size):
