@@ -23,7 +23,6 @@ class WaterLevels:
     def __init__(self,
                  waterlevels=[],
                  datesarray=[],
-                 missingdays=[]
                  ):
         """
         Use for raw python data, if reading from a file use any of the from_(filetype) constructors
@@ -42,7 +41,7 @@ class WaterLevels:
         self.n=len(waterlevels);
         self.wl=waterlevels;
         self.dates=datesarray;
-        self.md=missingdays;
+        self.md=[];
 
     @classmethod
     def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y"):
