@@ -2,15 +2,18 @@ import water_levels as wal
 import matplotlib.pyplot as plt
 import datetime
 
-x=wal.WaterLevels.from_csvfile(csvfile="DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M",missingformat="M");
+x=wal.WaterLevels.from_csvfile(csvfile="DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 
-date1=x.start_date;
-date2=x.start_date+datetime.timedelta(days=365);
-date3=x.end_date;
+aux1=x.first_date;
+date1=datetime.date(1931, 1, 1);
+print(x.date_index(date1));
+
+
+date2=date1+datetime.timedelta(days=30);
+date3=x.last_date;
 
 x.plot(date1,date2);
 
-y=x.peaks(date1,date3, 365);
+#y=x.peaks(date1,date3, 365);
 
-plt.plot(y);
-#plt.ylim(119.8, 120);
+#plt.plot(y);

@@ -23,7 +23,7 @@ class WaterLevels:
     def __init__(self,
                  waterlevels=[],
                  datesarray=[],
-                 missingdays=[datesarray[-1]]
+                 missingdays=[]
                  ):
         """
         Use for raw python data, if reading from a file use any of the from_(filetype) constructors
@@ -35,8 +35,7 @@ class WaterLevels:
         datesarray: datetime array
             dates as datetime objects corresponding to the day of the wl measurements
         missingdays: (optional) integer array
-            each entry has the last index of a continuous sequence of days, by default, by default
-            it starts with last_date    
+            each entry has the last index of a continuous sequence of days    
         """
         self.first_date=datesarray[0];
         self.last_date=datesarray[-1];
@@ -46,7 +45,7 @@ class WaterLevels:
         self.md=missingdays;
 
     @classmethod
-    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y",missformat=""):
+    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y"):
         """
         Creates instance of WaterLevels class from two column csv file
         
@@ -73,17 +72,21 @@ class WaterLevels:
             missingdates=[];
             n=0;
             for i in range(0,m):
-                n=n+1;
                 try:
-                    dates[i]=datetime.datetime.strptime(mydata[i][0],dateformat).date();
+                    wl[n]=float(mydata[i][1]);
+                    n=n+1;
                 except ValueError:
-                    print("format on entry", mydata[i][0], "is wrong");
-                
-                aux=0    
-                if
-                
-                wl[i]=float(mydata[i][1]);
-                    
+                    #print("Value at  ", i, " position is not parseable to float");
+                    pass;
+                try:
+                    x=datetime.datetime.strptime(mydata[i][0],dateformat).date();
+                    dates[n-1]=x;
+                except ValueError:
+                    print( "format on date entry "+ str(i)+" is wrong: " +str(mydata[i][0]) );
+            print(m);
+            print(n);
+            dates=dates[:n];
+            wl=wl[:n];
             return WaterLevels(waterlevels=wl,datesarray=dates);
 
     def date_index(self,date):
@@ -92,6 +95,7 @@ class WaterLevels:
             if(n==date):
                 return (n-self.first_date).days;
             n=n+datetime.timedelta(days=1);
+        return (n-self.first_date).days;
     
     def peaks(self, fromdate,todate, window_size):
         start=self.date_index(fromdate);
@@ -100,7 +104,7 @@ class WaterLevels:
         peak_array=[0]*num_windows;
         aux=0;
         for i in range(0,num_windows):
-            peak_array[i]=max(self.wl[ aux:(aux+window_size-1) ] );
+            peak_array[i]=max(self.wl[aux:(aux+window_size-1) ] );
             aux=aux+window_size;
         return peak_array;
     
