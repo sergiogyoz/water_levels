@@ -11,7 +11,7 @@ date1=datetime.date(1931, 1, 1);
 date2=date1+datetime.timedelta(days=365);
 date3=x.last_date;
 
-x.plot(date1,date2);
+wal.plot(x,date1,date2);
 
 #y=x.peaks(date1,date3, 365);
 

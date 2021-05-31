@@ -1,4 +1,5 @@
 # testing dictionaries in python
+import datetime
 
 class Stuff:
     def __init__(self, integ, flot):
@@ -27,9 +28,13 @@ ftuf=[1.1,5.5,6.6,7.7,4.4,9.9,8.8,2.2];
 intis=[8,7,6,5,4,3,2,1]
 
 
-x=dict(zip(ituf,ftuf));
+x=datetime.date(1999,1,1);
+y=datetime.date(1999,1,2);
+delta=y-x
 
-x[3];
+#x=dict(zip(ituf,ftuf));
+#x[3];
+
 #x=ComplexStuff([Stuff(ituf[i],ftuf[i]) for i in range(8)], intis);
 
 #key=Stuff(6,6.6);
