@@ -60,7 +60,8 @@ class WaterLevels:
         """
         Creates instance of WaterLevels class from two column csv file
         
-        The first column of the csv are the dates and the second one the water levels.
+        The first column of the csv are the dates and the second one the water levels. If using csv files 
+        imported from excel save as csv (MS-DOS)
         
         Parameters
         ----------
@@ -84,8 +85,10 @@ class WaterLevels:
             missingdates=[];
             n=0;
             for i in range(0,m):
+                parseable=False;
                 try:
                     wl[n]=float(mydata[i][1]);
+                    parseable=True;
                 except ValueError:
                     pass;
                 except:
@@ -93,12 +96,13 @@ class WaterLevels:
                     raise;
                 else:
                     n=n+1;
-                try:
-                    x=datetime.datetime.strptime(mydata[i][0],dateformat).date();
-                except ValueError:
-                    print( f"format on date entry {str(i)} is wrong: {str(mydata[i][0])}" );
-                else:
-                    dates[n-1]=x;
+                if parseable:
+                    try:
+                        x=datetime.datetime.strptime(mydata[i][0],dateformat).date();
+                    except ValueError:
+                        print( f"format on date entry {str(i)} is wrong: {str(mydata[i][0])}" );
+                    else:
+                        dates[n-1]=x;
             if(m-n>0):
                 print(f"There are {m-n} wrong format water levels (possibly missing dates)")
             dates=dates[:n];
@@ -130,6 +134,7 @@ class WaterLevels:
             while newdate not in self.date_index:
                 newdate=newdate+delta;
             return self.date_index[newdate];
+        raise Exception("The date cannot be rounded inside the dates array");
     
 def peaks(WL,fromdate,todate, window_size):
     """
@@ -165,7 +170,7 @@ def plot(WL,fromdate,todate):
     ndays=e-s;
     plt.figure(1);
     axs=plt.subplot(2,1,1);
-    plt.plot(WL.dates[s:e], WL.wl[s:e]);
+    plt.scatter(WL.dates[s:e], WL.wl[s:e],marker=".");
     locator=None;
     if ndays<36:
         locator=mdates.DayLocator(interval=7);
@@ -179,8 +184,14 @@ def plot(WL,fromdate,todate):
     axs.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
     plt.subplot(2,1,2);
     plt.hist(WL.wl[s:e]);
+    plt.show();
         
-def is_missing_dates(WL,fromdate,todate, numberofmissingdates=1):
+def is_missing_dates(WL,fromdate,todate, numofmissdates=1):
+    """
+    True if there are numofmissdates or more missing dates from fromdate to todate. Otherwise returns
+    false
+    """
+    
     count=0;
     s=WL.dindex(fromdate);
     e=WL.dindex(todate);
@@ -188,11 +199,13 @@ def is_missing_dates(WL,fromdate,todate, numberofmissingdates=1):
     for i in range(s+1,e+1):
         delta=WL.getdate(i)-WL.getdate(i-1);
         countdays=countdays+delta.days-1;
-        if(countdays>numberofmissingdates):
+        if(countdays>=numofmissdates):
             return True;
     return False;
     
 def missing_dates(WL,fromdate,todate):
+    """Returns an array of 2-tuples (a,b) such that the run from day a to day b are missing days"""
+    
     md=[]
     s=WL.dindex(fromdate);
     e=WL.dindex(todate);
@@ -200,8 +213,7 @@ def missing_dates(WL,fromdate,todate):
     for i in range(s+1,e+1):
         x=WL.getdate(i);
         y=WL.getdate(i-1);
-        delta=x-y;
-        if(delta.days>1):
+        if((x-y).days>1):
             oneday=datetime.timedelta(days=1);
             md.append((y+oneday,x-oneday));
     return md;
