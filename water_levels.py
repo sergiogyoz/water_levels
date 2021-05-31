@@ -32,16 +32,18 @@ class WaterLevels:
         waterlevels: float array
             the daily measurements of the water level
         datesarray: datetime array
-            dates as datetime objects corresponding to the day of the wl measurements
-        missingdays: (optional) integer array
-            each entry has the last index of a continuous sequence of days    
+            dates as datetime objects corresponding to the day of the wl measurements 
         """
         self.first_date=datesarray[0];
         self.last_date=datesarray[-1];
-        self.n=len(waterlevels);
+        n=len(waterlevels);
+        m=len(datesarray);
+        if n!=m :
+            raise Exception(f"water levels and dates array are not the same size. Sizes are: {n} and {m}")
+        self.n=n;
         self.wl=waterlevels;
         self.dates=datesarray;
-        self.md=[];
+        self.date_index=dict(zip(datesarray,range(n)));
 
     @classmethod
     def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y"):
@@ -82,38 +84,51 @@ class WaterLevels:
                     dates[n-1]=x;
                 except ValueError:
                     print( "format on date entry "+ str(i)+" is wrong: " +str(mydata[i][0]) );
-            print(m);
-            print(n);
+            print(f"There are {m-n} wrong format water levels (possibly missing dates)")
+
             dates=dates[:n];
             wl=wl[:n];
             return WaterLevels(waterlevels=wl,datesarray=dates);
 
-    def date_index(self,date):
-        n=self.first_date;
-        while(n<=self.last_date and n<=date):
-            if(n==date):
-                return (n-self.first_date).days;
-            n=n+datetime.timedelta(days=1);
-        return (n-self.first_date).days;
+    def dindex(self,date):
+        """
+        Index of a given date. If date doesn't exist it throws a key error
+        """
+        return self.date_index[date];
     
     def peaks(self, fromdate,todate, window_size):
-        start=self.date_index(fromdate);
-        end=self.date_index(todate);
-        num_windows=int(((end-start)+1)/window_size);
+        """
+        Returns an array of peak values for disjoint windows of window size from fromdate to todate
+        
+        Parameters
+        ----------
+        fromdate: datetime.date
+            starting date in the datetime.date class
+        todate: datetime.date
+            ending date in the datetime.date class
+        window_size: int
+            size of the window in days for the peaks
+        """
+        s=self.dindex(fromdate);
+        e=self.dindex(todate);
+        num_windows=int(((e-s)+1)/window_size);
         peak_array=[0]*num_windows;
-        aux=0;
+        aux=s;
         for i in range(0,num_windows):
             peak_array[i]=max(self.wl[aux:(aux+window_size-1) ] );
             aux=aux+window_size;
         return peak_array;
     
     def plot(self,fromdate,todate):
-        start=self.date_index(fromdate);
-        end=self.date_index(todate);
-        ndays=end-start;
+        """
+        Line plot of water levels time series and histogram from fromdate to todate
+        """
+        s=self.dindex(fromdate);
+        e=self.dindex(todate);
+        ndays=e-s;
         plt.figure(1);
         axs=plt.subplot(2,1,1);
-        plt.plot(self.dates[start:end], self.wl[start:end]);
+        plt.plot(self.dates[s:e], self.wl[s:e]);
         locator=None;
         if ndays<36:
             locator=mdates.DayLocator(interval=7);
@@ -126,5 +141,5 @@ class WaterLevels:
         axs.xaxis.set_major_locator(locator);
         axs.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
         plt.subplot(2,1,2);
-        plt.hist(self.wl[start:end]);
+        plt.hist(self.wl[s:e]);
     

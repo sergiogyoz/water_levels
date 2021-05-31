@@ -20,13 +20,18 @@ class ComplexStuff:
         self.ints=arrayofint;
         
 
+#raise Exception("Halting the program");
+
 ituf=[1,5,6,7,4,9,8,2];
 ftuf=[1.1,5.5,6.6,7.7,4.4,9.9,8.8,2.2];
 intis=[8,7,6,5,4,3,2,1]
 
 
-x=ComplexStuff([Stuff(ituf[i],ftuf[i]) for i in range(8)], intis);
+x=dict(zip(ituf,ftuf));
 
-key=Stuff(6,6.6);
-x.stuffs[3]=100;
+x[3];
+#x=ComplexStuff([Stuff(ituf[i],ftuf[i]) for i in range(8)], intis);
+
+#key=Stuff(6,6.6);
+#x.stuffs[3]=100;
 #x.ref[key];

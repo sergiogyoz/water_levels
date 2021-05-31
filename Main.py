@@ -6,10 +6,9 @@ x=wal.WaterLevels.from_csvfile(csvfile="DubuqueIA.csv",headers=True,dateformat="
 
 aux1=x.first_date;
 date1=datetime.date(1931, 1, 1);
-print(x.date_index(date1));
 
 
-date2=date1+datetime.timedelta(days=30);
+date2=date1+datetime.timedelta(days=365);
 date3=x.last_date;
 
 x.plot(date1,date2);
