@@ -62,43 +62,36 @@ class WaterLevels:
     def setwl(self, i, value):
         self.wl[i]=value;
         
-    def dindex(self,date, roundup=False,rounddown=False):
+    def getindex(self,date):
         """
         Index of a given date. If date doesn't exist it throws a key error
         """
         
-        newdate=None;
-        if roundup and rounddown:
-            raise Exception("Don't mess with me (can't round up and down at the same time");
-        try:
-            x=self.date_index[date];
-            return x;
-        except KeyError:
-            if (not roundup) and (not rounddown):
-                raise KeyError(f"date {date} is missing");
-            #brute force solution to rounding up or down
-        if roundup and self.last_date>date:
-            delta=datetime.timedelta(days=1);
-            newdate=date+delta;
-            while newdate not in self.date_index:
-                newdate=newdate+delta;
-            print(f"closest date found to {date} is: {newdate}")
-            return self.date_index[newdate];
-        if rounddown and self.first_date<date:
-            delta=datetime.timedelta(days=-1);
-            newdate=date+delta;
-            while newdate not in self.date_index:
-                newdate=newdate+delta;
-            print(f"closest date found to {date} is: {newdate}")
-            return self.date_index[newdate];
-        raise IndexError("The date can't be rounded in the dates array");
+        return self.date_index[date];
         
-    def round_date(self, date, roundup=False):
+    def round_date(self, date, roundup=False, rounding=True):
         """
         defaults to round down
         """
         
-        return self.getdate(self.dindex(date,roundup,not roundup));
+        newdate=None;
+        try:
+            self.date_index[date];
+            return date;
+        except KeyError:
+            if not rounding:
+                raise KeyError(f"date {date} is missing");                
+        #brute force solution to rounding up or down
+        delta=datetime.timedelta(days=-1);
+        if roundup:
+            delta=datetime.timedelta(days=1)
+        if rounding:
+            newdate=date+delta;
+            while newdate not in self.date_index:
+                newdate=newdate+delta;
+            print(f"closest date found to {date} is: {newdate}")
+            return newdate;
+        raise IndexError("The date can't be rounded in the dates array");
 
     @classmethod
     def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y"):
@@ -154,9 +147,21 @@ class WaterLevels:
             return WaterLevels(waterlevels=wl,datesarray=dates);
     
     @staticmethod    
-    def warning_missing_dates(WL,fromdate,todate):
-        """"""
-    
+    def warning_missing_dates(WL,fromdate,todate,tolerance=0):
+        """
+        returns True if the number missing days are above the tolerance and gives a warning
+        """
+        
+        s=WL.getindex(fromdate);
+        e=WL.getindex(todate);
+        expected_number_of_days=(todate-fromdate).days+1;
+        miss_days= expected_number_of_days-(e-s+1);
+        if miss_days>tolerance:
+            print(f"too many days missing: {miss_days}");
+            return True;
+        return False;
+        
+        
     @staticmethod
     def peaks(WL,fromdate,todate, window_size, max_missing_dates=0):
         """
@@ -174,8 +179,8 @@ class WaterLevels:
             maximum number of missing dates it tolerates in a window
         """
         
-        s=WL.dindex(fromdate,roundup=True);
-        e=WL.dindex(todate,rounddown=True);
+        s=WL.getindex(fromdate);
+        e=WL.getindex(todate);
         
         num_windows=int(((e-s)+1)/window_size);
         peak_array=[0]*num_windows;
@@ -191,8 +196,8 @@ class WaterLevels:
         Line plot of water levels time series and histogram from fromdate to todate
         """
         
-        s=WL.dindex(fromdate);
-        e=WL.dindex(todate);
+        s=WL.getindex(fromdate);
+        e=WL.getindex(todate);
         ndays=e-s;
         plt.figure(1);
         axs=plt.subplot(2,1,1);
@@ -220,8 +225,8 @@ class WaterLevels:
         """
         
         count=0;
-        s=WL.dindex(fromdate);
-        e=WL.dindex(todate);
+        s=WL.getindex(fromdate);
+        e=WL.getindex(todate);
         countdays=0;
         for i in range(s+1,e+1):
             delta=WL.getdate(i)-WL.getdate(i-1);
@@ -237,8 +242,8 @@ class WaterLevels:
         """
         
         md=[]
-        s=WL.dindex(fromdate);
-        e=WL.dindex(todate);
+        s=WL.getindex(fromdate);
+        e=WL.getindex(todate);
         countdays=0;
         for i in range(s+1,e+1):
             x=WL.getdate(i);
