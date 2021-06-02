@@ -32,7 +32,9 @@ plt.plot(ituf,ftuf);
 
 x=datetime.date(1999,1,1);
 y=datetime.date(1999,1,2);
-delta=y-x
+delta=y-x;
+
+lala=ituf[range(1,3)];
 
 #x=dict(zip(ituf,ftuf));
 #x[3];
