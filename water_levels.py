@@ -147,19 +147,14 @@ class WaterLevels:
             return WaterLevels(waterlevels=wl,datesarray=dates);
     
     @staticmethod    
-    def warning_missing_dates(WL,fromdate,todate,tolerance=0):
+    def num_missing_dates(WL,fromdate,todate,tolerance=0):
         """
-        returns True if the number missing days are above the tolerance and gives a warning
+        returns the number of missing days
         """
         
         s=WL.getindex(fromdate);
         e=WL.getindex(todate);
-        expected_number_of_days=(todate-fromdate).days+1;
-        miss_days= expected_number_of_days-(e-s+1);
-        if miss_days>tolerance:
-            print(f"too many days missing: {miss_days}");
-            return True;
-        return False;
+        return (todate-fromdate).days-(e-s);
         
         
     @staticmethod
@@ -224,7 +219,6 @@ class WaterLevels:
         false
         """
         
-        count=0;
         s=WL.getindex(fromdate);
         e=WL.getindex(todate);
         countdays=0;
