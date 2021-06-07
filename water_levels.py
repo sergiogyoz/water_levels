@@ -3,7 +3,7 @@ import datetime
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib.ticker as ticker
+
 
 import statsmodels as sm
         
@@ -156,7 +156,8 @@ class WaterLevels:
         e=WL.getindex(todate);
         return (todate-fromdate).days-(e-s);
         
-        
+#I should push this one out and instead make filtering methods since this one is more about the stats than handling WLs
+    
     @staticmethod
     def peaks(WL,fromdate,todate, window_size, max_missing_dates=0):
         """
