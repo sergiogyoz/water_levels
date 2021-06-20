@@ -65,8 +65,20 @@ class WaterLevels:
         """
         Index of a given date. If date doesn't exist it throws a key error
         """
-        
-        return self.date_index[date];
+        if isinstance(date, datetime.date):
+            return self.date_index[date];
+        return [self.date_index[d] for d in date];
+    
+    def get_time_window(self,fromdate,todate): #returns the existing water level values from fromdate to todate
+        """
+        Returns the water level values from from date to todate. (it does not keep track of the dates, use for extracting only)
+        """
+    
+        s=WaterLevels.round_date(self, fromdate,roundup=True);
+        s=self.getindex(s);
+        e=WaterLevels.round_date(self, todate);
+        e=self.getindex(e);    
+        return [self.wl[i] for i in range(s,e+1)];
     
     @staticmethod 
     def round_date(WL, date, roundup=False): #rounds down the date in the array (if possible)
@@ -78,13 +90,13 @@ class WaterLevels:
         try:
             WL.date_index[date];
             return date;
-        except:
+        except KeyError:
             pass;
         delta=datetime.timedelta(days=-1);
         roundable=(WL.first_date<date);
         if roundup:
             delta=datetime.timedelta(days=1);
-            roundable=(WL.first_date>date);
+            roundable=(WL.last_date>date);
         if not roundable:
            raise KeyError("date can't be rounded up or down because is outside of bounds"); 
         newdate=date+delta;
@@ -206,7 +218,7 @@ class WaterLevels:
             wl.append(None);
         
         plt.figure(1);
-        axs=plt.subplot(2,1,1,ylabel=(f"water level {WL.units}"));
+        axs=plt.subplot(2,1,1,ylabel=(f"water level {WL.units}"), xlabel=" date ");
         plt.scatter(dates, wl ,marker=".");
         locator=None;
         if ndays<36:
@@ -313,22 +325,44 @@ class WaterLevels:
         return passed;
 
     @staticmethod 
-    def check_week(WL,fromdate,miss_days_tol=1,consecutive_days_missed=1): #check a 7 day period 
+    def check_week(WL,fromdate,miss_days_tol=1,consecutive_days_missed=7): #check a 7 day period 
         return WaterLevels.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=7) ,miss_days_tol,consecutive_days_missed);
 
     @staticmethod 
-    def check_month(WL,fromdate,miss_days_tol=1,consecutive_days_missed=1): #check a 30 day period 
-        return WaterLevels.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=30) ,miss_days_tol,consecutive_days_missed);
+    def check_month(WL,year,month,miss_days_tol=1,consecutive_days_missed=30): #check a 30 day period 
+        firstdayofmonth=datetime.date(year,1 , 1)+datetime.timedelta(days=(month-1)*30);
+        return WaterLevels.check_time_window(
+            WL, firstdayofmonth, firstdayofmonth+datetime.timedelta(days=30), miss_days_tol,consecutive_days_missed);
 
     @staticmethod 
-    def check_year(WL,year,miss_days_month=1): #check a 360 year
+    def check_year(WL,year, miss_days_tol=1,consecutive_days_missed=365): #check a 365 day period
+        dindex=datetime.date(year, 1, 1);        
+        return WaterLevels.check_time_window(WL, dindex, dindex+datetime.timedelta(days=365),miss_days_tol,consecutive_days_missed);
+
+    @staticmethod 
+    def check_year_by_month(WL,year,miss_days_month=1): #check a 360 year making sure there're no big holes along
         dindex=datetime.date(year, 1, 1);
         for i in range(12):
             fdm=dindex+datetime.timedelta(days=i*30);
-            if WaterLevels.check_month(WL, fdm, miss_days_month, 31) :
+            if WaterLevels.check_month(WL, fdm, miss_days_month) :
                 return False;
         return True;
-             
+    
+    @staticmethod
+    def get_month_from_years(WL,month,years,miss_days_tol=1,consecutive_days_missed=30):
+        n=len(years);
+        m=[];
+        addyear=[False]*n;
+        for i in range(n):
+                #Does resizing impact performance too much in here??
+                if WaterLevels.check_month(WL, years[i], month,miss_days_tol,consecutive_days_missed):
+                    firstdayofmonth=datetime.date(years[i],1,1)+datetime.timedelta(days=30*(month-1));
+                    m.append(WL.get_time_window(firstdayofmonth,firstdayofmonth+datetime.timedelta(days=30-1)));
+                else:
+                    m.append([-1]);
+        return m;
+                
+
 def peaks(WL,fromdate,todate, window_size, max_missing_dates=0):
     """
     Returns an array of peak values for disjoint windows of window size from fromdate to todate
