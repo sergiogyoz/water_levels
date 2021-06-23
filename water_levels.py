@@ -4,9 +4,8 @@ import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-#I should use numpy to keep data size of simple data types as integers small.
-
 import statsmodels as sm
+#I should use numpy to keep data size of simple data types as integers small.
         
 class WaterLevels:
     """
@@ -156,7 +155,7 @@ class WaterLevels:
                     else:
                         dates[n-1]=x;
             if(m-n>0):
-                print(f"There are {m-n} wrong format water levels (possibly missing dates)")
+                print(f"There are {m-n} wrong format water levels (possibly missing dates)");
             dates=dates[:n];
             wl=wl[:n];
             return WaterLevels(waterlevels=wl,datesarray=dates);
@@ -173,16 +172,14 @@ class WaterLevels:
             s=WL.getindex(fromdate);
         except KeyError:
             s=WaterLevels.round_date(WL, fromdate,roundup=True);
-            missfirst=(s-fromdate).days;
             s=WL.getindex(s);
         try:
             e=WL.getindex(todate);
         except KeyError:
             e=WaterLevels.round_date(WL, todate);
-            misslast=(todate-e).days;
             e=WL.getindex(e);
 
-        return (todate-fromdate).days-(e-s)+missfirst+misslast;
+        return (todate-fromdate).days-(e-s);
     
     @staticmethod    
     def plot(WL,fromdate,todate): #plots WL from fromdate to todate
@@ -241,30 +238,7 @@ class WaterLevels:
         True if there are num_missing_dates or more missing dates from fromdate to todate. Otherwise returns false
         """
         
-        missfirst=0;
-        misslast=0;
-        try:
-            s=WL.getindex(fromdate);
-        except KeyError:
-            s=WaterLevels.round_date(WL, fromdate,roundup=True);
-            missfirst=(s-fromdate).days;
-            s=WL.getindex(s);
-        try:
-            e=WL.getindex(todate);
-        except KeyError:
-            e=WaterLevels.round_date(WL, todate);
-            misslast=(todate-e).days;
-            e=WL.getindex(e);
-        
-        countdays=missfirst+misslast;
-        if(countdays>=num_missing_dates):
-            return True;
-        
-        for i in range(s+1,e+1):
-            delta=WL.getdate(i)-WL.getdate(i-1);
-            countdays=countdays+delta.days-1;
-            if(countdays>=num_missing_dates):
-                return True;
+        if(WaterLevels.num_missing_dates(WL, fromdate, todate)>=num_missing_dates): return True;
         return False;
         
     @staticmethod
@@ -278,7 +252,7 @@ class WaterLevels:
             s=WL.getindex(fromdate);
         except KeyError:
             s=WaterLevels.round_date(WL, fromdate,roundup=True);
-            md.append((fromdate,s));
+            md.append((fromdate,s-datetime.timedelta(days=1)));
             s=WL.getindex(s);
         missinglast=False;
         try:
@@ -295,7 +269,7 @@ class WaterLevels:
                 oneday=datetime.timedelta(days=1);
                 md.append((y+oneday,x-oneday));
         if missinglast:
-            md.append((WL.getdate(e),todate));
+            md.append((WL.getdate(e)+datetime.timedelta(days=1),todate));
         return md;
 
     @staticmethod 
