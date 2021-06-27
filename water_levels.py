@@ -81,6 +81,19 @@ class WaterLevels:
         e=self.getindex(e);    
         return [self.wl[i] for i in range(s,e+1)];
     
+    def get_time_window_dates(self,fromdate,todate):
+        """
+        returns the existing dates from fromdate to todate on the object.
+        If rounding down or up is impossible inside the data it throws an error. If rounding is possible 
+        but the range contains no values it returns an empty array.
+        """
+        
+        s=WaterLevels.round_date(self, fromdate,roundup=True);
+        s=self.getindex(s);
+        e=WaterLevels.round_date(self, todate);
+        e=self.getindex(e); 
+        return [self.dates[i] for i in range(s,e+1)];
+    
     @staticmethod 
     def round_date(WL, date, roundup=False): #rounds down the date in the array (if possible)
         """
@@ -100,7 +113,13 @@ class WaterLevels:
             roundable=(WL.last_date>date);
         if not roundable:
            raise KeyError("date can't be rounded up or down because is outside of bounds"); 
-        newdate=date+delta;
+        #We are roundable so we can try to start rounding from date or the boundaries, whichever closer
+        if not roundup:
+            if date<WL.last_date: newdate=date;
+            else: newdate=WL.last_date;
+        else:
+            if date>WL.first_date: newdate=date;
+            else: newdate=WL.first_date;
         while newdate not in WL.date_index:
             newdate=newdate+delta;
         print(f"closest date found to {date} is: {newdate}")
@@ -162,6 +181,16 @@ class WaterLevels:
             wl=wl[:n];
             return WaterLevels(waterlevels=wl,datesarray=dates);
     
+    @staticmethod 
+    def sub_wl(WL, fromdate, todate):
+        s=WaterLevels.round_date(WL, fromdate,roundup=True);
+        s=WL.getindex(s);
+        e=WaterLevels.round_date(WL, todate);
+        e=WL.getindex(e);
+        indices=range(s,e+1);
+        sub=WaterLevels(WL.getwl(indices),WL.getdate(indices),WL.units);
+        return sub;
+    
     @staticmethod    
     def num_missing_dates(WL,fromdate,todate): #returns the number of missing dates in WL from fromdate to todate
         """
@@ -184,12 +213,14 @@ class WaterLevels:
         return (todate-fromdate).days-(e-s);
     
     @staticmethod    
-    def plot(WL,fromdate,todate): #plots WL from fromdate to todate
+    def plot(WL,fromdate=-1,todate=-1): #plots WL from fromdate to todate
         """
-        Line plot of water levels time series and histogram from fromdate to todate
+        Line plot of water levels time series and histogram from fromdate to todate. If no from or last date provided it
+        will use the first and last date from WL.
         """
         
-
+        if(fromdate==-1): fromdate=WL.first_date;
+        if(todate==-1): todate=WL.last_date;        
         dates=[];
         wl=[];
         try:
@@ -345,9 +376,26 @@ class WaterLevels:
                     m.append([-1]);
         return m;
                 
-    def get_years(WL,fromyear,toyear,checkid=0,miss_day_tol=1,consecutive_days_missed=366):
-        pass;
+    def get_years(WL,fromyear,toyear,checkid=0,miss_day_tol=366,consecutive_days_missed=366):
+        """
+        gets wl data from a given year. If data doesn't pass the test in a year it returns the [-1] array for that year.
+        if no data exist on the range but passes the test it returns an empty array [].
+        """
         
+        ys=[];
+        for year in range(fromyear,toyear+1):
+            goodyear=True;
+            if checkid==1:
+                goodyear=WaterLevels.check_year(WL,year,miss_day_tol,consecutive_days_missed );
+            if checkid==2:
+                goodyear=WaterLevels.check_year_by_month(WL,year,miss_day_tol);
+            if goodyear:
+                ys.append( WL.get_time_window(datetime.date(year,1,1), datetime.date(year,12,31)) );
+            else:
+                ys.append([-1]);
+        
+        if(fromyear==toyear): return ys[0];
+        return ys;        
 
 def peaks(WL,fromdate,todate, window_size, max_missing_dates=0):
     """

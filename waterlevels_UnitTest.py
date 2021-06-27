@@ -617,7 +617,6 @@ def all_checks():
     missing_days_check();
     checks_check();
 
-
 """
 Created on Wed Jun 23 12:51:22 2021
 
