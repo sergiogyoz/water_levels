@@ -47,6 +47,8 @@ smoothcurve=True;
 
 if(smoothcurve): ys=sm;
 
+#animation
+
 fig, ax= plt.subplots()
 ax.set_xlim(0, 365);
 ax.set_ylim(580, 615);
@@ -74,3 +76,38 @@ ani = FuncAnimation(fig, update,frames=len(ys),
 
 plt.show()
 
+#Year averages
+
+yearaverages=[];
+for i in range(len(ys)):
+    try:
+        yearaverages.append(sum(ys[i][1])/len(ys[i][1]));
+    except ZeroDivisionError:
+        yearaverages.append(None);
+
+yasm=[]; 
+m2=9;   #m only distinguishes odd values to keep the average centered around the point
+        #the bigger m the smoother the curve
+for year in range(len(yearaverages)):
+    s=0; n=0;
+    for i in range(-int(m2/2), int(m2/2)+1):
+        try:
+            if yearaverages[year+i]:
+                s=s+yearaverages[year+i];
+                n=n+1;
+        except IndexError:
+            pass;
+    try:
+        yasm.append(s/n);
+    except ZeroDivisionError:
+        yasm.append(None);
+
+smoothaverages=True;
+if(smoothaverages): yearaverages=yasm;
+
+plt.figure();
+ax2=plt.subplot();
+ax2.set_ylim(587, 600);
+ax2.set_xlabel("year");
+ax2.set_ylabel(f"water level average ({WL.units})");
+plt.plot(range(WL.first_date.year, WL.first_date.year+len(yearaverages)),yearaverages);
