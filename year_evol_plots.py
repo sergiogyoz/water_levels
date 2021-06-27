@@ -16,7 +16,36 @@ for year in range(initialyear, WL.last_date.year):
     #append to ys
     dayoftheyear=[(dates[i]-date1).days+1 for i in range(len(dates))];
     ys.append([dayoftheyear,wl]);
-    
+
+#smoothing curve procedure    
+
+sm=[]; 
+m=5;    #m only distinguishes odd values to keep the average centered around the point
+        #the bigger m the smoother the curve
+def smoothvalue(year, day):
+    s=0; n=0;
+    for i in range(-int(m/2), int(m/2)+1):
+        try:
+            if ys[year][0][day+i]==ys[year][0][day]+i:
+                s=s+ys[year][1][day+i];
+                n=n+1;
+        except IndexError:
+            pass;
+    return s/n;
+
+
+for year in range(len(ys)):
+    yeardata=[];
+    for day in range(len(ys[year][0])):
+        yeardata.append(smoothvalue(year,day));
+    sm.append([ys[year][0],yeardata]);
+
+
+#do I want to smooch the curve?
+
+smoothcurve=True;
+
+if(smoothcurve): ys=sm;
 
 fig, ax= plt.subplots()
 ax.set_xlim(0, 365);
