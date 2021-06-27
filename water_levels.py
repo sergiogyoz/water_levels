@@ -70,7 +70,9 @@ class WaterLevels:
     
     def get_time_window(self,fromdate,todate): #returns the existing water level values from fromdate to todate
         """
-        Returns the water level values from from date to todate. (it does not keep track of the dates, use for extracting only)
+        Returns the water level values from from date to todate (it does not keep track of the dates, 
+        use for extracting wl values only). If rounding down or up is impossible inside the data it throws an
+        error. If rounding is possible but the range contains no values it returns an empty array.
         """
     
         s=WaterLevels.round_date(self, fromdate,roundup=True);
@@ -288,8 +290,8 @@ class WaterLevels:
     @staticmethod 
     def check_time_window(WL, fromdate, todate, miss_days_tol=1, consecutive_days_missed=1): #check from fromdate to todate
         """
-        returns true if the number of missing days is miss_day_tol or greater. it also returns true if there are more
-        than consecutive_days_missed consecutive days missing.
+        returns false if the number of missing days is miss_day_tol or greater. it also returns false if there are more
+        than consecutive_days_missed consecutive days missing. otherwise it returns true
         
         general function to check if there are missing days and missing consecutive days in a window
         """
@@ -299,17 +301,17 @@ class WaterLevels:
         return passed;
 
     @staticmethod 
-    def check_week(WL,fromdate,miss_days_tol=1,consecutive_days_missed=7): #check a 7 day period 
+    def check_week(WL,fromdate,miss_days_tol=1,consecutive_days_missed=8): #check a 7 day period 
         return WaterLevels.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=7) ,miss_days_tol,consecutive_days_missed);
 
     @staticmethod 
-    def check_month(WL,year,month,miss_days_tol=1,consecutive_days_missed=30): #check a 30 day period 
+    def check_month(WL,year,month,miss_days_tol=1,consecutive_days_missed=31): #check a 30 day period 
         firstdayofmonth=datetime.date(year,1 , 1)+datetime.timedelta(days=(month-1)*30);
         return WaterLevels.check_time_window(
             WL, firstdayofmonth, firstdayofmonth+datetime.timedelta(days=30), miss_days_tol,consecutive_days_missed);
 
     @staticmethod 
-    def check_year(WL,year, miss_days_tol=1,consecutive_days_missed=365): #check a 365 day period
+    def check_year(WL,year, miss_days_tol=1,consecutive_days_missed=366): #check a 365 day period
         dindex=datetime.date(year, 1, 1);        
         return WaterLevels.check_time_window(WL, dindex, dindex+datetime.timedelta(days=365),miss_days_tol,consecutive_days_missed);
 
@@ -324,6 +326,13 @@ class WaterLevels:
     
     @staticmethod
     def get_month_from_years(WL,month,years,miss_days_tol=1,consecutive_days_missed=30):
+        """
+        get data from a month in a given year. If data doesn't pass the test it returns the [-1] array.
+        if no data exist on the range but passes the test it returns an empty array [].
+        """
+        
+        if isinstance(years,int): #if only a number then make it into a single value array
+            years=[years];
         n=len(years);
         m=[];
         addyear=[False]*n;
@@ -336,6 +345,9 @@ class WaterLevels:
                     m.append([-1]);
         return m;
                 
+    def get_years(WL,fromyear,toyear,checkid=0,miss_day_tol=1,consecutive_days_missed=366):
+        pass;
+        
 
 def peaks(WL,fromdate,todate, window_size, max_missing_dates=0):
     """

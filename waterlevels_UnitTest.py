@@ -529,18 +529,6 @@ def csv_reading_check():
         if(data.dates[i]!=realdates[i]): something_broke(f"dates don't fit at index {i}: {data.dates[i]} vs {realdates[i]}");
         if(data.wl[i]!=realwl[i]): something_broke(f"water levels don't fit at index {i}: {data.wl[i]} vs {realwl[i]}");
 
-def gets_check():
-    if data.getdate([2,3,201,252])!=[
-            datetime.date(1891, 2, 28),
-            datetime.date(1891, 3, 26),
-            datetime.date(1891,10, 20),
-            datetime.date(1892, 1, 4)
-            ] : something_broke("getdate broke");
-    if data.getwl([2,3,201,252])!=[100.01,200.02,300.03,400.04] :something_broke("getwl broke");   
-    if data.get_time_window(datetime.date(1891, 1, 1), datetime.date(1891,4,1))!= [
-            591.77, 591.47, 100.01, 200.02, 591.47, 590.87, 590.97, 591.37, 592.17, 592.57
-            ]: something_broke("time window broke");
-    
 def round_check():
     msg="rounding not working well";
     try:
@@ -558,6 +546,19 @@ def round_check():
     except KeyError:
         pass;
 
+def gets_check():
+    if data.getdate([2,3,201,252])!=[
+            datetime.date(1891, 2, 28),
+            datetime.date(1891, 3, 26),
+            datetime.date(1891,10, 20),
+            datetime.date(1892, 1, 4)
+            ] : something_broke("getdate broke");
+    if data.getwl([2,3,201,252])!=[100.01,200.02,300.03,400.04] :something_broke("getwl broke");   
+    if data.get_time_window(datetime.date(1891, 1, 1), datetime.date(1891,4,1))!= [
+            591.77, 591.47, 100.01, 200.02, 591.47, 590.87, 590.97, 591.37, 592.17, 592.57
+            ]: something_broke("time window broke");
+
+    
 def missing_days_check(): 
     num=wal.WaterLevels.num_missing_dates(data, datetime.date(1891, 1, 1), datetime.date(1891, 12, 31));
     if num!=113 : something_broke("number of missing days");
@@ -587,17 +588,34 @@ def missing_days_check():
         something_broke("number of days missing in a row having issues");
     if wal.WaterLevels.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 11):
         something_broke("number of days missing in a row having issues");
-    
+
+def checks_check():
+    try:
+        wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10));
+        something_broke("check time window function on limits of data is having issues");
+    except KeyError:
+        pass;
+    if not wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 28),miss_days_tol=30,consecutive_days_missed=30):
+        something_broke("check with ample missdays and consecdays tolerance is not passing");
+    if wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=6,consecutive_days_missed=6):
+        something_broke("check with exact number of missing dates is not failing");
+    if wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=7,consecutive_days_missed=3):
+        something_broke("check with exact number of missing consecutive dates is not failing");
+    if wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=6,consecutive_days_missed=3):
+        something_broke("check with exact number of both missing and consecutive dates is not failing");
+    if not wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=7,consecutive_days_missed=4):
+        something_broke("check with exact number of both missing and consecutive dates is not passing");
+
+
 def all_checks():
     """
-    Gives an error if any of the functions checks fails
+    Gives an error if any of the function checks fails
     """
     csv_reading_check();
     gets_check();
     round_check();
     missing_days_check();
-
-all_checks();
+    checks_check();
 
 
 """
