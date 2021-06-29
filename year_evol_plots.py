@@ -5,6 +5,7 @@ import datetime
 
 WL=wal.WaterLevels.from_csvfile(csvfile="DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 
+#Extracting dates as int indices with their corresponding values
 ys=[];
 initialyear=WL.first_date.year+1;
 for year in range(initialyear, WL.last_date.year):
@@ -69,7 +70,7 @@ if(smoothcurve):
     ys=sm;
 
 
-#animation
+#animation of wl data evolution along the year
 fig, ax= plt.subplots()
 ax.set_xlim(0, 365);
 ax.set_ylim(580, 615);
@@ -116,5 +117,49 @@ ax2.set_ylim(587, 600);
 ax2.set_xlabel("year");
 ax2.set_ylabel(f"water level average ({WL.units})");
 plt.plot(range(WL.first_date.year, WL.first_date.year+len(yearaverages)),yearaverages);
+
+
+#From monthly data now
+monthdata=[];
+for month in range(1,12+1):
+    monthdata.append( 
+        wal.WaterLevels.get_month_from_years(WL, 
+                                             month, 
+                                             range(initialyear,WL.last_date.year),
+                                             miss_days_tol=16) 
+        );
+    
+monthaverages=[];
+ny=len(monthdata[0]);
+novalueformat=620;
+for month in range(12):
+    currentmonth=[];
+    for year in range(ny):
+        total=0; n=0;
+        for i in range(len(monthdata[month][year])):
+            if monthdata[month][year][i]!=-1:
+                total= total+monthdata[month][year][i];
+                n=n+1;
+        try:
+            currentmonth.append(total/n);
+        except ZeroDivisionError:
+            currentmonth.append(novalueformat);
+    monthaverages.append(currentmonth);
+
+#weird but fun thing
+plt.figure();
+plt.imshow(monthaverages); # add parameter: interpolation='bilinear' if I want smoother colors
+
+#let's plot every month in a single figure
+trashfig,ax3=plt.subplots(nrows=6,ncols=2,sharex=True,sharey=True);
+ax3[0][0].set_ylim(585, 615);
+for month in range(12):
+    ax3[month//2][month%2].plot(
+        range(initialyear, WL.first_date.year+len(monthaverages[month])+1),
+        smoother(monthaverages[month],m=0,empty_format=novalueformat),
+        marker='.'
+        )
+
+
 
 plt.show()
