@@ -17,38 +17,59 @@ for year in range(initialyear, WL.last_date.year):
     dayoftheyear=[(dates[i]-date1).days+1 for i in range(len(dates))];
     ys.append([dayoftheyear,wl]);
 
-#smoothing curve procedure    
 
-sm=[]; 
-m=5;    #m only distinguishes odd values to keep the average centered around the point
-        #the bigger m the smoother the curve
-def smoothvalue(year, day):
-    s=0; n=0;
-    for i in range(-int(m/2), int(m/2)+1):
-        try:
-            if ys[year][0][day+i]==ys[year][0][day]+i:
-                s=s+ys[year][1][day+i];
-                n=n+1;
-        except IndexError:
-            pass;
-    return s/n;
-
-
-for year in range(len(ys)):
-    yeardata=[];
-    for day in range(len(ys[year][0])):
-        yeardata.append(smoothvalue(year,day));
-    sm.append([ys[year][0],yeardata]);
-
+#smoother method
+def smoother(values, continuity_indices=[], m=0, empty_format=None): 
+    """
+    returns an array of smoother values using the average of the 2m+1 values center around each value. It makes an average
+    of those avaliable if there are missing values
+    """   
+    if len(continuity_indices)==0:
+        #work with values, so holes are in the values array as empty format e.g. 2,5,None,3,...
+        newvalues=[None]*len(values);
+        for i in range(len(values)):
+            s=0; n=0;
+            for k in range(-m,m+1):
+                try:
+                    if values[i+k] != empty_format:
+                        s=s+values[i+k];
+                        n=n+1;
+                except IndexError:
+                    pass; #left/right limits
+            try:
+                newvalues[i]=s/n;
+            except (ZeroDivisionError, TypeError):
+                newvalues[i]=None; #we could also just pass but... lets not
+        return newvalues;
+    else:
+        if len(values)!=len(continuity_indices) : raise ValueError(f"values and indices are not the same size: {len(values)} and {len(continuity_indices)}");
+        newvalues=[0]*len(values);
+        #work with indices, so holes are differences of indices values e.g. 1,2,4,...
+        for i in range(len(continuity_indices)):
+            s=0; n=0;
+            for k in range(-m,m+1):
+                try:
+                    if continuity_indices[i+k]==continuity_indices[i]+k:
+                        s=s+values[i+k];
+                        n=n+1;
+                except IndexError:
+                    pass; #left/right limits
+            newvalues[i]=s/n;
+        return newvalues;
+                    
 
 #do I want to smooch the curve?
-
 smoothcurve=True;
+if(smoothcurve): 
+    sm=[]; 
+    m1=2; #smoothness parameter
+    for year in range(len(ys)):
+        yeardata=smoother(ys[year][1],ys[year][0],m1);
+        sm.append([ys[year][0],yeardata]);    
+    ys=sm;
 
-if(smoothcurve): ys=sm;
 
 #animation
-
 fig, ax= plt.subplots()
 ax.set_xlim(0, 365);
 ax.set_ylim(580, 615);
@@ -56,8 +77,6 @@ ax.set_xlabel("day of the year");
 ax.set_ylabel(f"water level ({WL.units})");
 ycounter=ax.text(160,610, '',fontsize=15)
 lines=plt.plot(ys[0][0], ys[0][1], '.',[], [],'.')
-
-
 
 def init():
     ycounter.set_text(f"year: {initialyear}")
@@ -74,36 +93,22 @@ ani = FuncAnimation(fig, update,frames=len(ys),
                     interval=100, repeat=False,
                     init_func=init, blit=True)
 
-plt.show()
 
 #Year averages
-
 yearaverages=[];
 for i in range(len(ys)):
     try:
         yearaverages.append(sum(ys[i][1])/len(ys[i][1]));
-    except ZeroDivisionError:
+    except (ZeroDivisionError, TypeError):
+        print("data at index {i} is very empty");
         yearaverages.append(None);
 
-yasm=[]; 
-m2=9;   #m only distinguishes odd values to keep the average centered around the point
-        #the bigger m the smoother the curve
-for year in range(len(yearaverages)):
-    s=0; n=0;
-    for i in range(-int(m2/2), int(m2/2)+1):
-        try:
-            if yearaverages[year+i]:
-                s=s+yearaverages[year+i];
-                n=n+1;
-        except IndexError:
-            pass;
-    try:
-        yasm.append(s/n);
-    except ZeroDivisionError:
-        yasm.append(None);
-
+ 
+#do I wanna smooth?
 smoothaverages=True;
-if(smoothaverages): yearaverages=yasm;
+if(smoothaverages): 
+    m2=2; #smoothness parameter
+    yearaverages=smoother(yearaverages,m=m2,empty_format=None);
 
 plt.figure();
 ax2=plt.subplot();
@@ -111,3 +116,5 @@ ax2.set_ylim(587, 600);
 ax2.set_xlabel("year");
 ax2.set_ylabel(f"water level average ({WL.units})");
 plt.plot(range(WL.first_date.year, WL.first_date.year+len(yearaverages)),yearaverages);
+
+plt.show()

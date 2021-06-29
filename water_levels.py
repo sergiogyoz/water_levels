@@ -95,12 +95,13 @@ class WaterLevels:
         return [self.dates[i] for i in range(s,e+1)];
     
     @staticmethod 
-    def round_date(WL, date, roundup=False): #rounds down the date in the array (if possible)
+    def round_date(WL,date,roundup=False): #rounds down the date in the array (if possible)
         """
         defaults to rounding down
         """
         
         newdate=None;
+        debugtext="down";
         try:
             WL.date_index[date];
             return date;
@@ -111,8 +112,9 @@ class WaterLevels:
         if roundup:
             delta=datetime.timedelta(days=1);
             roundable=(WL.last_date>date);
+            debugtext="up";
         if not roundable:
-           raise KeyError("date can't be rounded up or down because is outside of bounds"); 
+           raise KeyError(f"date {date} can't be rounded {debugtext} because is outside of bounds"); 
         #We are roundable so we can try to start rounding from date or the boundaries, whichever closer
         if not roundup:
             if date<WL.last_date: newdate=date;
@@ -182,7 +184,7 @@ class WaterLevels:
             return WaterLevels(waterlevels=wl,datesarray=dates);
     
     @staticmethod 
-    def sub_wl(WL, fromdate, todate):
+    def sub_wl(WL,fromdate,todate):
         s=WaterLevels.round_date(WL, fromdate,roundup=True);
         s=WL.getindex(s);
         e=WaterLevels.round_date(WL, todate);
@@ -202,14 +204,19 @@ class WaterLevels:
         try:
             s=WL.getindex(fromdate);
         except KeyError:
-            s=WaterLevels.round_date(WL, fromdate,roundup=True);
-            s=WL.getindex(s);
+            try:
+                s=WaterLevels.round_date(WL, fromdate,roundup=True);
+                s=WL.getindex(s);
+            except KeyError:
+                return (todate-fromdate).days+1;
         try:
             e=WL.getindex(todate);
         except KeyError:
-            e=WaterLevels.round_date(WL, todate);
-            e=WL.getindex(e);
-
+            try:
+                e=WaterLevels.round_date(WL, todate);
+                e=WL.getindex(e);
+            except KeyError:
+                return (todate-fromdate).days+1;
         return (todate-fromdate).days-(e-s);
     
     @staticmethod    
@@ -319,7 +326,7 @@ class WaterLevels:
         return False;
     
     @staticmethod 
-    def check_time_window(WL, fromdate, todate, miss_days_tol=1, consecutive_days_missed=1): #check from fromdate to todate
+    def check_time_window(WL,fromdate,todate,miss_days_tol=1,consecutive_days_missed=1): #check from fromdate to todate
         """
         returns false if the number of missing days is miss_day_tol or greater. it also returns false if there are more
         than consecutive_days_missed consecutive days missing. otherwise it returns true
@@ -338,8 +345,8 @@ class WaterLevels:
     @staticmethod 
     def check_month(WL,year,month,miss_days_tol=1,consecutive_days_missed=31): #check a 30 day period 
         firstdayofmonth=datetime.date(year,1 , 1)+datetime.timedelta(days=(month-1)*30);
-        return WaterLevels.check_time_window(
-            WL, firstdayofmonth, firstdayofmonth+datetime.timedelta(days=30), miss_days_tol,consecutive_days_missed);
+        lastdayofmonth=firstdayofmonth+datetime.timedelta(days=29);
+        return WaterLevels.check_time_window(WL, firstdayofmonth, lastdayofmonth, miss_days_tol, consecutive_days_missed);
 
     @staticmethod 
     def check_year(WL,year, miss_days_tol=1,consecutive_days_missed=366): #check a 365 day period
@@ -358,7 +365,7 @@ class WaterLevels:
     @staticmethod
     def get_month_from_years(WL,month,years,miss_days_tol=1,consecutive_days_missed=30):
         """
-        get data from a month in a given year. If data doesn't pass the test it returns the [-1] array.
+        get data from a month in a given year(s). If data doesn't pass the test it returns the [-1] array.
         if no data exist on the range but passes the test it returns an empty array [].
         """
         
@@ -376,17 +383,18 @@ class WaterLevels:
                     m.append([-1]);
         return m;
                 
-    def get_years(WL,fromyear,toyear,checkid=0,miss_day_tol=366,consecutive_days_missed=366):
+    @staticmethod
+    def get_years(WL,years,checkid=0,miss_day_tol=366,consecutive_days_missed=366):
         """
-        gets wl data from a given year. If data doesn't pass the test in a year it returns the [-1] array for that year.
+        gets wl data from the given years. If data doesn't pass the test in a year it returns the [-1] array for that year.
         if no data exist on the range but passes the test it returns an empty array [].
         """
         
         ys=[];
-        for year in range(fromyear,toyear+1):
+        for year in years:
             goodyear=True;
             if checkid==1:
-                goodyear=WaterLevels.check_year(WL,year,miss_day_tol,consecutive_days_missed );
+                goodyear=WaterLevels.check_year(WL, year, miss_day_tol, consecutive_days_missed);
             if checkid==2:
                 goodyear=WaterLevels.check_year_by_month(WL,year,miss_day_tol);
             if goodyear:
@@ -394,10 +402,10 @@ class WaterLevels:
             else:
                 ys.append([-1]);
         
-        if(fromyear==toyear): return ys[0];
+        if isinstance(years, int) : return ys[0];
         return ys;        
 
-def peaks(WL,fromdate,todate, window_size, max_missing_dates=0):
+def peaks(WL,fromdate,todate,window_size,max_missing_dates=0):
     """
     Returns an array of peak values for disjoint windows of window size from fromdate to todate
     
