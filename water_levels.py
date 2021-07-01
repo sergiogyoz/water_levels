@@ -271,15 +271,6 @@ class WaterLevels:
         plt.subplot(2,1,2,xlabel=f"water level {WL.units}");
         plt.hist(WL.getwl(range(s,e+1)));
         plt.show();
-
-    @staticmethod            
-    def is_missing_dates(WL,fromdate,todate, num_missing_dates=1): #returns true if WL is missing num_missing_dates or more
-        """
-        True if there are num_missing_dates or more missing dates from fromdate to todate. Otherwise returns false
-        """
-        
-        if(WaterLevels.num_missing_dates(WL, fromdate, todate)>=num_missing_dates): return True;
-        return False;
         
     @staticmethod
     def missing_dates(WL,fromdate,todate): #returns missing days in WL from fromdate to todate
@@ -291,16 +282,24 @@ class WaterLevels:
         try:
             s=WL.getindex(fromdate);
         except KeyError:
-            s=WaterLevels.round_date(WL, fromdate,roundup=True);
-            md.append((fromdate,s-datetime.timedelta(days=1)));
-            s=WL.getindex(s);
+            try:
+                s=WaterLevels.round_date(WL, fromdate,roundup=True);
+                md.append((fromdate,s-datetime.timedelta(days=1)));
+                s=WL.getindex(s);
+            except KeyError:
+                md=[(fromdate,todate)];
+                return md;
         missinglast=False;
         try:
             e=WL.getindex(todate);
         except KeyError:
-            e=WaterLevels.round_date(WL, todate);
-            e=WL.getindex(e);
-            missinglast=True;
+            try:
+                e=WaterLevels.round_date(WL, todate);
+                e=WL.getindex(e);
+                missinglast=True;
+            except KeyError:
+                md=[(fromdate,todate)];
+                return md;
         countdays=0;
         for i in range(s+1,e+1):
             x=WL.getdate(i);
@@ -311,6 +310,16 @@ class WaterLevels:
         if missinglast:
             md.append((WL.getdate(e)+datetime.timedelta(days=1),todate));
         return md;
+
+    @staticmethod            
+    def is_missing_dates(WL,fromdate,todate, num_missing_dates=1): #returns true if WL is missing num_missing_dates or more
+        """
+        True if there are num_missing_dates or more missing dates from fromdate to todate. Otherwise returns false
+        """
+        
+        if(WaterLevels.num_missing_dates(WL, fromdate, todate)>=num_missing_dates): return True;
+        return False;
+
 
     @staticmethod 
     def is_missing_in_a_row(WL,fromdate,todate,max_consecutive_days): #returns true if it's missing max_consecutive_days consecutive days in a row

@@ -566,8 +566,7 @@ def missing_days_check():
     if wal.WaterLevels.is_missing_dates(data, datetime.date(1891,10,4), datetime.date(1891,11,27)):
         something_broke("is_missing days is (strangely) broken")
     if not wal.WaterLevels.is_missing_dates(data, datetime.date(1891,10,1), datetime.date(1891,11,27)):
-        something_broke("is_missing days is (strangely) broken")
-    
+        something_broke("is_missing days is (strangely) broken")    
     realmissingdates=[
         (datetime.date(1891, 2, 1),datetime.date(1891,2,25)),
         (datetime.date(1891, 3, 1),datetime.date(1891,3,25)),
@@ -578,23 +577,17 @@ def missing_days_check():
         ]
     if wal.WaterLevels.missing_dates(data, datetime.date(1891,2,1), datetime.date(1892, 1, 31))!=realmissingdates:
         something_broke("ranges of missing dates are wrong");
-
-    try:
-        wal.WaterLevels.is_missing_in_a_row(data, datetime.date(1891,2,1), datetime.date(1891,2,9), 10);
+    if wal.WaterLevels.is_missing_in_a_row(data, datetime.date(1891,2,1), datetime.date(1891,2,9), 10):
         something_broke("missing more days than there are");
-    except KeyError:
-        pass;
     if not wal.WaterLevels.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 10):
         something_broke("number of days missing in a row having issues");
     if wal.WaterLevels.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 11):
         something_broke("number of days missing in a row having issues");
 
 def checks_check():
-    try:
-        wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10));
+    if not wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10), miss_days_tol=11, consecutive_days_missed=11 ) \
+    or wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10), miss_days_tol=10, consecutive_days_missed=10 ):
         something_broke("check time window function on limits of data is having issues");
-    except KeyError:
-        pass;
     if not wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 28),miss_days_tol=30,consecutive_days_missed=30):
         something_broke("check with ample missdays and consecdays tolerance is not passing");
     if wal.WaterLevels.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=6,consecutive_days_missed=6):
@@ -616,6 +609,8 @@ def all_checks():
     round_check();
     missing_days_check();
     checks_check();
+    
+all_checks();
 
 """
 Created on Wed Jun 23 12:51:22 2021
