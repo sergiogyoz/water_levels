@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
 
+#path for ffmpeg for the animation save/recording to work
+plt.rcParams['animation.ffmpeg_path']="./ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe"
+
+
 WL=wal.WaterLevels.from_csvfile(csvfile="DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 
 #Extracting dates as int indices with their corresponding values
@@ -91,9 +95,11 @@ def update(frame):
     
 
 ani = FuncAnimation(fig, update,frames=len(ys),
-                    interval=100, repeat=False,
-                    init_func=init, blit=True)
-
+                    interval=50, repeat=False,
+                    init_func=init, blit=True,
+                    save_count=143)
+#save animation
+#ani.save("wholeRange.mp4",bitrate=100) #bitrate good quality around the 4000
 
 #Year averages
 yearaverages=[];
