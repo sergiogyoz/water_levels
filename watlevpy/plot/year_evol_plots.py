@@ -1,4 +1,4 @@
-import water_levels as wal
+import watlevpy.waterlevels as wal
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
@@ -7,7 +7,7 @@ import datetime
 plt.rcParams['animation.ffmpeg_path']="./ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe"
 
 
-WL=wal.WaterLevels.from_csvfile(csvfile="DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
+WL=wal.WaterLevels.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 
 #Extracting dates as int indices with their corresponding values
 ys=[];
@@ -27,10 +27,14 @@ for year in range(initialyear, WL.last_date.year):
 def smoother(values, continuity_indices=[], m=0, empty_format=None): 
     """
     returns an array of smoother values using the average of the 2m+1 values center around each value. It makes an average
-    of those avaliable if there are missing values
+    of those avaliable if there are missing values. Edge values, or in general more isolated points, are biased being 
+    calculated from less values
     """   
+    #there's a potential increase of 5 times the speed if we change the logic of this to work by keeping a 
+    #window of 5 and a mask on the valid values an moving it from start to end
+    
     if len(continuity_indices)==0:
-        #work with values, so holes are in the values array as empty format e.g. 2,5,None,3,...
+        #work with values, so holes are in the values in the array as empty_format e.g. -1, None
         newvalues=[None]*len(values);
         for i in range(len(values)):
             s=0; n=0;
