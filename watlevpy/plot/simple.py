@@ -1,13 +1,14 @@
-import watlevpy.waterlevels.WaterLevels as wal
+import watlevpy.waterlevels as wal
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-def plot(WL,fromdate=-1,todate=-1): #plots WL from fromdate to todate
+def plot(WL=None,fromdate=-1,todate=-1, gtype=1): #plots WL from fromdate to todate
     """
     Line plot of water levels time series and histogram from fromdate to todate. If no from or last date provided it
     will use the first and last date from WL.
     """
     
+    WL=WL if WL else wal.WaterLevels();
     if(fromdate==-1): fromdate=WL.first_date;
     if(todate==-1): todate=WL.last_date;        
     dates=[];
@@ -36,9 +37,12 @@ def plot(WL,fromdate=-1,todate=-1): #plots WL from fromdate to todate
         dates.append(todate);
         wl.append(None);
     
-    plt.figure(1);
-    axs=plt.subplot(2,1,1,ylabel=(f"water level {WL.units}"), xlabel=" date ");
-    plt.scatter(dates, wl ,marker=".");
+    #dots curve
+    fig,axs= plt.subplots()
+    plt.plot(ylabel=(f"water level {WL.units}"), xlabel=" date ");
+    if gtype==1: plt.scatter(dates, wl ,marker=".");
+    if gtype==2: plt.plot(dates,wl);
+    if gtype==3: plt.plot(dates,wl,marker=".");
     locator=None;
     if ndays<36:
         locator=mdates.DayLocator(interval=7);
@@ -48,8 +52,15 @@ def plot(WL,fromdate=-1,todate=-1): #plots WL from fromdate to todate
         locator=mdates.MonthLocator(interval=2);
     else:
         locator=mdates.AutoDateLocator(maxticks=6);
+    
     axs.xaxis.set_major_locator(locator);
     axs.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
-    plt.subplot(2,1,2,xlabel=f"water level {WL.units}");
-    plt.hist(WL.getwl(range(s,e+1)));
+    
+    #histogram
+    fig,axs=plt.subplots();
+    plt.hist(WL.getwl(range(s,e+1)), edgecolor='#E6E6E6');
+    axs.set_xlabel(f"water level {WL.units}");
+    axs.set_axisbelow(True);
+    plt.grid(color='#E6E6E6', linestyle='solid');
+    
     plt.show();
