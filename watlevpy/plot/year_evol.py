@@ -3,6 +3,30 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
 
+class YearData:
+    """Raw data class used in the year evolution plotting"""
+    
+    def __init__(self, WL, initialyear=None, endyear=None): #you can probably put a year tolerance for years with too many missing days
+        
+        fd=datetime.date(initialyear, 1, 1);
+        ld=datetime.date(endyear, 12, 365);
+        initialyear= wal.WaterLevels.round_date(WL,fd,True) if initialyear else WL.first_date.year; 
+        endyear= wal.WaterLevels.round_date(WL,ld) if endyear else WL.last_date.year;
+        ys=[];
+        initialyear=WL.first_date.year+1;
+        years=range(initialyear, endyear+1);
+        for year in years:
+            date1=datetime.date(year, 1, 1);
+            date365=date1+datetime.timedelta(days=364);
+            #get data and dates from that year
+            wl=WL.get_time_window(date1, date365);
+            dates=WL.get_time_window_dates(date1, date365);
+            #append to ys
+            dayoftheyear=[(dates[i]-date1).days+1 for i in range(len(dates))];
+            ys.append(zip(dayoftheyear,wl));
+        self.yd=dict(zip(years,ys));
+    
+    
 #path for ffmpeg for the animation save/recording to work
 plt.rcParams['animation.ffmpeg_path']="./ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe"
 

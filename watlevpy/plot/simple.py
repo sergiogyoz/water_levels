@@ -5,7 +5,7 @@ import matplotlib.dates as mdates
 def plot(WL=None,fromdate=-1,todate=-1, gtype=1): #plots WL from fromdate to todate
     """
     Line plot of water levels time series and histogram from fromdate to todate. If no from or last date provided it
-    will use the first and last date from WL.
+    will use the first and last date from WL. gtype from 1 to 5 to see different styles
     """
     
     WL=WL if WL else wal.WaterLevels();
@@ -43,6 +43,8 @@ def plot(WL=None,fromdate=-1,todate=-1, gtype=1): #plots WL from fromdate to tod
     if gtype==1: plt.scatter(dates, wl ,marker=".");
     if gtype==2: plt.plot(dates,wl);
     if gtype==3: plt.plot(dates,wl,marker=".");
+    if gtype==4: plt.scatter(dates,wl,marker="o")
+    if gtype==5: plt.plot(dates,wl,marker="o")
     locator=None;
     if ndays<36:
         locator=mdates.DayLocator(interval=7);
