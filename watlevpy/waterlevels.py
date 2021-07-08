@@ -68,14 +68,18 @@ class WaterLevels:
     def get_time_window(self,fromdate,todate): #returns the existing water level values from fromdate to todate
         """
         Returns the water level values from from date to todate (it does not keep track of the dates, 
-        use for extracting wl values only). If rounding down or up is impossible inside the data it throws an
-        error. If rounding is possible but the range contains no values it returns an empty array.
+        use for extracting wl values only). If rounding down or up is impossible inside the data it returns
+        an empty array. If rounding is possible but the range contains no values it returns an empty array.
         """
-    
-        s=WaterLevels.round_date(self, fromdate,roundup=True);
-        s=self.getindex(s);
-        e=WaterLevels.round_date(self, todate);
-        e=self.getindex(e);    
+        
+        try:
+            s=WaterLevels.round_date(self, fromdate,roundup=True);
+            s=self.getindex(s);
+            e=WaterLevels.round_date(self, todate);
+            e=self.getindex(e);        
+        except KeyError:
+            print("range outside of bounds")
+            return [];
         return [self.wl[i] for i in range(s,e+1)];
     
     def get_time_window_dates(self,fromdate,todate):
@@ -94,7 +98,8 @@ class WaterLevels:
     @staticmethod 
     def round_date(WL,date,roundup=False): #rounds down the date in the array (if possible)
         """
-        defaults to rounding down. Set roundup to True to round up. 
+        defaults to rounding down. Set roundup to True to round up. Impossible to round if
+        round up above data or rounding down below data, in which case it throws a KeyError Exception
         """
         
         newdate=None;
@@ -354,6 +359,8 @@ class WaterLevels:
         if isinstance(years, int) : return ys[0];
         return ys;        
 
+
+        
 def peaks(WL,fromdate,todate,window_size,max_missing_dates=0):
     """
     Returns an array of peak values for disjoint windows of window size from fromdate to todate
