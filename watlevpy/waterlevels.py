@@ -1,10 +1,6 @@
 import csv
 import datetime
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-
-import statsmodels as sm
 #I should use numpy to keep data size of simple data types as integers small.
         
 class WaterLevels:
@@ -20,7 +16,7 @@ class WaterLevels:
     
     """
     
-    def __init__(self, waterlevels=[], datesarray=[], units="ft"): #class constructor
+    def __init__(self, waterlevels=None, datesarray=None, units=""): #class constructor
         """
         Use for raw python data, if reading from a file use any of the from_(filetype) constructors
         
@@ -31,7 +27,8 @@ class WaterLevels:
         datesarray: datetime array
             dates as datetime objects corresponding to the day of the wl measurements 
         """
-        
+        waterlevels=waterlevels if waterlevels else [];
+        datesarray=datesarray if datesarray else [];        
         self.first_date=datesarray[0];
         self.last_date=datesarray[-1];
         n=len(waterlevels);
@@ -71,14 +68,18 @@ class WaterLevels:
     def get_time_window(self,fromdate,todate): #returns the existing water level values from fromdate to todate
         """
         Returns the water level values from from date to todate (it does not keep track of the dates, 
-        use for extracting wl values only). If rounding down or up is impossible inside the data it throws an
-        error. If rounding is possible but the range contains no values it returns an empty array.
+        use for extracting wl values only). If rounding down or up is impossible inside the data it returns
+        an empty array. If rounding is possible but the range contains no values it returns an empty array.
         """
-    
-        s=WaterLevels.round_date(self, fromdate,roundup=True);
-        s=self.getindex(s);
-        e=WaterLevels.round_date(self, todate);
-        e=self.getindex(e);    
+        
+        try:
+            s=WaterLevels.round_date(self, fromdate,roundup=True);
+            s=self.getindex(s);
+            e=WaterLevels.round_date(self, todate);
+            e=self.getindex(e);        
+        except KeyError:
+            print("range outside of bounds")
+            return [];
         return [self.wl[i] for i in range(s,e+1)];
     
     def get_time_window_dates(self,fromdate,todate):
@@ -97,7 +98,8 @@ class WaterLevels:
     @staticmethod 
     def round_date(WL,date,roundup=False): #rounds down the date in the array (if possible)
         """
-        defaults to rounding down
+        defaults to rounding down. Set roundup to True to round up. Impossible to round if
+        round up above data or rounding down below data, in which case it throws a KeyError Exception
         """
         
         newdate=None;
@@ -131,7 +133,7 @@ class WaterLevels:
         raise IndexError("The date can't be rounded in the dates array");
 
     @classmethod
-    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y"): #reads WaterLevels from csvfile
+    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y", units="ft"): #reads WaterLevels from csvfile
         """
         Creates instance of WaterLevels class from two column csv file
         
@@ -181,7 +183,7 @@ class WaterLevels:
                 print(f"There are {m-n} wrong format water levels (possibly missing dates)");
             dates=dates[:n];
             wl=wl[:n];
-            return WaterLevels(waterlevels=wl,datesarray=dates);
+            return WaterLevels(waterlevels=wl,datesarray=dates,units=units);
     
     @staticmethod 
     def sub_wl(WL,fromdate,todate):
@@ -198,9 +200,6 @@ class WaterLevels:
         """
         returns the number of missing days
         """
-        
-        missfirst=0;
-        misslast=0;
         try:
             s=WL.getindex(fromdate);
         except KeyError:
@@ -218,59 +217,6 @@ class WaterLevels:
             except KeyError:
                 return (todate-fromdate).days+1;
         return (todate-fromdate).days-(e-s);
-    
-    @staticmethod    
-    def plot(WL,fromdate=-1,todate=-1): #plots WL from fromdate to todate
-        """
-        Line plot of water levels time series and histogram from fromdate to todate. If no from or last date provided it
-        will use the first and last date from WL.
-        """
-        
-        if(fromdate==-1): fromdate=WL.first_date;
-        if(todate==-1): todate=WL.last_date;        
-        dates=[];
-        wl=[];
-        try:
-            s=WL.getindex(fromdate);
-        except KeyError:
-            s=WaterLevels.round_date(WL, fromdate,roundup=True);
-            s=WL.getindex(s);
-            dates.append(fromdate);
-            wl.append(None);
-            print("missing days at the beginning");
-        missinglast=False;
-        try:
-            e=WL.getindex(todate);
-        except KeyError:
-            e=WaterLevels.round_date(WL, todate);
-            e=WL.getindex(e);
-            missinglast=True;
-            print("missing days at the end");
-        
-        ndays=(todate-fromdate).days+1;
-        dates.extend(WL.getdate(range(s,e+1)));
-        wl.extend(WL.getwl(range(s,e+1)));
-        if missinglast:
-            dates.append(todate);
-            wl.append(None);
-        
-        plt.figure(1);
-        axs=plt.subplot(2,1,1,ylabel=(f"water level {WL.units}"), xlabel=" date ");
-        plt.scatter(dates, wl ,marker=".");
-        locator=None;
-        if ndays<36:
-            locator=mdates.DayLocator(interval=7);
-        elif ndays<130:
-            locator=mdates.WeekdayLocator(interval=3);
-        elif ndays<370:
-            locator=mdates.MonthLocator(interval=2);
-        else:
-            locator=mdates.AutoDateLocator(maxticks=6);
-        axs.xaxis.set_major_locator(locator);
-        axs.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
-        plt.subplot(2,1,2,xlabel=f"water level {WL.units}");
-        plt.hist(WL.getwl(range(s,e+1)));
-        plt.show();
         
     @staticmethod
     def missing_dates(WL,fromdate,todate): #returns missing days in WL from fromdate to todate
@@ -312,32 +258,31 @@ class WaterLevels:
         return md;
 
     @staticmethod            
-    def is_missing_dates(WL,fromdate,todate, num_missing_dates=1): #returns true if WL is missing num_missing_dates or more
+    def is_missing_dates(WL,fromdate,todate, num_missing_dates=0): #returns true if WL is missing more than num_missing_dates
         """
         True if there are num_missing_dates or more missing dates from fromdate to todate. Otherwise returns false
         """
         
-        if(WaterLevels.num_missing_dates(WL, fromdate, todate)>=num_missing_dates): return True;
+        if(WaterLevels.num_missing_dates(WL, fromdate, todate)>num_missing_dates): return True;
         return False;
 
-
     @staticmethod 
-    def is_missing_in_a_row(WL,fromdate,todate,max_consecutive_days): #returns true if it's missing max_consecutive_days consecutive days in a row
+    def is_missing_in_a_row(WL,fromdate,todate,max_consecutive_days): #returns true if it's missing more than max_consecutive_days consecutive days in a row
         """
         returns true if there are more than max_consecutive_days consecutive days missing from fromdate to todate
         """
         
         md=WaterLevels.missing_dates(WL,fromdate,todate);
         for i in range(len(md)):
-            if (md[i][1]-md[i][0]).days+1>=max_consecutive_days:
+            if (md[i][1]-md[i][0]).days+1>max_consecutive_days:
                 print(f"last consecutive day check at {md[i][1]}")
                 return True;
         return False;
     
     @staticmethod 
-    def check_time_window(WL,fromdate,todate,miss_days_tol=1,consecutive_days_missed=1): #check from fromdate to todate
+    def check_time_window(WL,fromdate,todate,miss_days_tol=0,consecutive_days_missed=0): #check from fromdate to todate
         """
-        returns false if the number of missing days is miss_day_tol or greater. it also returns false if there are more
+        returns false if the number of missing days is more than miss_day_tol. it also returns false if there are more
         than consecutive_days_missed consecutive days missing. otherwise it returns true
         
         general function to check if there are missing days and missing consecutive days in a window
@@ -348,22 +293,22 @@ class WaterLevels:
         return passed;
 
     @staticmethod 
-    def check_week(WL,fromdate,miss_days_tol=1,consecutive_days_missed=8): #check a 7 day period 
+    def check_week(WL,fromdate,miss_days_tol=0,consecutive_days_missed=7): #check a 7 day period 
         return WaterLevels.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=7) ,miss_days_tol,consecutive_days_missed);
 
     @staticmethod 
-    def check_month(WL,year,month,miss_days_tol=1,consecutive_days_missed=31): #check a 30 day period 
+    def check_month(WL,year,month,miss_days_tol=0,consecutive_days_missed=30): #check a 30 day period 
         firstdayofmonth=datetime.date(year,1 , 1)+datetime.timedelta(days=(month-1)*30);
         lastdayofmonth=firstdayofmonth+datetime.timedelta(days=29);
         return WaterLevels.check_time_window(WL, firstdayofmonth, lastdayofmonth, miss_days_tol, consecutive_days_missed);
 
     @staticmethod 
-    def check_year(WL,year, miss_days_tol=1,consecutive_days_missed=366): #check a 365 day period
+    def check_year(WL,year, miss_days_tol=0,consecutive_days_missed=365): #check a 365 day period
         dindex=datetime.date(year, 1, 1);        
         return WaterLevels.check_time_window(WL, dindex, dindex+datetime.timedelta(days=365),miss_days_tol,consecutive_days_missed);
 
     @staticmethod 
-    def check_year_by_month(WL,year,miss_days_month=1): #check a 360 year making sure there're no big holes along
+    def check_year_by_month(WL,year,miss_days_month=0): #check a 360 year making sure there're no big holes along
         dindex=datetime.date(year, 1, 1);
         for i in range(12):
             fdm=dindex+datetime.timedelta(days=i*30);
@@ -372,7 +317,7 @@ class WaterLevels:
         return True;
     
     @staticmethod
-    def get_month_from_years(WL,month,years,miss_days_tol=1,consecutive_days_missed=30):
+    def get_month_from_years(WL,month,years,miss_days_tol=0,consecutive_days_missed=30):
         """
         get data from a month in a given year(s). If data doesn't pass the test it returns the [-1] array.
         if no data exist on the range but passes the test it returns an empty array [].
@@ -393,7 +338,7 @@ class WaterLevels:
         return m;
                 
     @staticmethod
-    def get_years(WL,years,checkid=0,miss_day_tol=366,consecutive_days_missed=366):
+    def get_years(WL,years,checkid=0,miss_day_tol=365,consecutive_days_missed=365):
         """
         gets wl data from the given years. If data doesn't pass the test in a year it returns the [-1] array for that year.
         if no data exist on the range but passes the test it returns an empty array [].
@@ -414,6 +359,8 @@ class WaterLevels:
         if isinstance(years, int) : return ys[0];
         return ys;        
 
+
+        
 def peaks(WL,fromdate,todate,window_size,max_missing_dates=0):
     """
     Returns an array of peak values for disjoint windows of window size from fromdate to todate
