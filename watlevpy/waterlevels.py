@@ -16,7 +16,7 @@ class WaterLevels:
     
     """
     
-    def __init__(self, waterlevels=None, datesarray=None, units=""): #class constructor
+    def __init__(self, waterlevels=None, datesarray=None, frequency="daily", units=""): #class constructor
         """
         Use for raw python data, if reading from a file use any of the from_(filetype) constructors
         
@@ -35,6 +35,7 @@ class WaterLevels:
         m=len(datesarray);
         if n!=m :
             raise Exception(f"water levels and dates array are not the same size. Sizes are: {n} and {m}")
+        self.frequency=frequency;
         self.n=n;
         self.wl=waterlevels;
         self.dates=datesarray;
@@ -359,8 +360,12 @@ class WaterLevels:
         if isinstance(years, int) : return ys[0];
         return ys;        
 
-
+class TSFilter:
+    pass;
         
+class TSReader:
+    pass;
+    
 def peaks(WL,fromdate,todate,window_size,max_missing_dates=0):
     """
     Returns an array of peak values for disjoint windows of window size from fromdate to todate
