@@ -1,5 +1,5 @@
 import datetime
-import watlevpy.waterlevels as wal
+import watlevpy.time_series as wal
 
 class YearData:
     """Raw data class used in the year evolution plotting"""
@@ -30,8 +30,8 @@ class YearData:
     def from_WL(cls, WL, initialyear=None, endyear=None): #you can probably put a year tolerance for years with too many missing days
         initialyear=initialyear if initialyear else WL.first_date.year; 
         endyear= endyear if endyear else WL.last_date.year;
-        initialyear=wal.WaterLevels.round_date(WL,datetime.date(initialyear,1,1),True).year;
-        endyear= wal.WaterLevels.round_date(WL,datetime.date(endyear,12,31)).year;
+        initialyear=wal.TS.round_date(WL,datetime.date(initialyear,1,1),True).year;
+        endyear= wal.TS.round_date(WL,datetime.date(endyear,12,31)).year;
         ys=[];
         years=range(initialyear, endyear+1);
         for year in years:
