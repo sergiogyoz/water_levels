@@ -1,5 +1,6 @@
 import csv
 import datetime
+import calendar
 
 #I should use numpy to keep data size of simple data types as integers small.
         
@@ -16,7 +17,10 @@ class TS:
     
     """
     
-    def __init__(self, waterlevels=None, datesarray=None, units="", frequency="daily"): #class constructor
+    _frequencies=["daily","weekly","30monthly","365-yearly","monthly","yearly","custom",];
+    
+    #I need to add a new standard fr 30-day-month and regular month for the delta 
+    def __init__(self, waterlevels=None, datesarray=None, units="", frequency="daily", customdelta=0): #class constructor
         """
         Use for raw python data, if reading from a file use any of the from_(filetype) constructors
         
@@ -26,6 +30,12 @@ class TS:
             the daily measurements of the water level
         datesarray: datetime array
             dates as datetime objects corresponding to the day of the wl measurements 
+        units: string (optional)
+            units of the wl measurements as a string
+        frequency: string (optional)
+            the frequency of the measurements used in the delta function to calculate next or previous date, etc.
+        customtimewindow: int (optional)
+            a custom time delta for a custom frequency. It only works if the frequency is set to "custom".
         """
         waterlevels=waterlevels if waterlevels else [];
         datesarray=datesarray if datesarray else [];        
@@ -35,11 +45,12 @@ class TS:
         m=len(datesarray);
         if n!=m :
             raise Exception(f"water levels and dates array are not the same size. Sizes are: {n} and {m}")
+        if frequency=="custom":
+            if customdelta!=0:
+                self._custom_delta=datetime.timedelta(days=customdelta);
+            else:
+                raise Exception("custom frequency set with no customtimewindow set");
         self.frequency=frequency;
-        if (frequency=="daily"):
-            self.tdelta=datetime.timedelta(days=1);
-        else:
-            raise ValueError("frequency and tdelta don't match");
         self.n=n;
         self.wl=waterlevels;
         self.dates=datesarray;
@@ -81,6 +92,47 @@ class TS:
             return [];
         return [self.wl[i] for i in range(s,e+1)];
     
+    def delta(self,currentdate=None):
+        """
+        time delta based on the frequency of the time series. If needed e.g., monthly delta changes each month,
+        current date should be provided as a datetime object.
+        """
+        d=None;
+        if self.frequency=="daily":
+            d=datetime.timedelta(days=1);
+        if self.frequency=="weekly":
+            d=datetime.timedelta(days=7);
+        if self.frequency=="30monthly":
+            d=datetime.timedelta(days=30);
+        if self.frequency=="365yearly":
+            d=datetime.timedelta(days=365);
+        if self.frequency=="monthly":
+            if currentdate==None:
+                raise ValueError("no currentdate provided");
+            d=datetime.timedelta(days=calendar.monthrange(currentdate.year,currentdate.month)[1]);
+        if self.frequency=="yearly":
+            if currentdate==None:
+                raise ValueError("no currentdate provided");
+            d=datetime.timedelta(days=365+calendar.isleap(currentdate.year));
+        if self.frequency=="custom":
+            d=self._custom_delta;
+        return d;
+    
+    def _normalize_date(self,date):
+        """
+        Formats a given date using the TS frequency and structure so that adding delta will yield the (possible) next date.
+        """
+        if self.frequency=="monthly":
+            return datetime.date(date.year,date.month,1);
+        if self.frequency=="yearly":
+            return datetime.date(date.year,1,1);
+        firstday=datetime.date.toordinal(self.first_date);
+        delta=self.delta().days;
+        dateordinal=datetime.date.toordinal(date);
+        newdate= datetime.date.fromordinal(dateordinal-(dateordinal-firstday)%delta);
+        return newdate;
+
+    
     def get_time_window_dates(self,fromdate,todate):
         """
         returns the existing dates from fromdate to todate on the object.
@@ -98,7 +150,8 @@ class TS:
     def round_date(WL,date,roundup=False): #rounds down the date in the array (if possible)
         """
         defaults to rounding down. Set roundup to True to round up. Impossible to round if
-        round up above data or rounding down below data, in which case it throws a KeyError Exception
+        round up above data or rounding down below data, in which case it throws a KeyError Exception. 
+        It uses the corresponding frequency to calculate the "next" or "previous" date.
         """
         
         newdate=None;
@@ -108,10 +161,8 @@ class TS:
             return date;
         except KeyError:
             pass;
-        delta=datetime.timedelta(days=-1);
         roundable=(WL.first_date<date);
         if roundup:
-            delta=datetime.timedelta(days=1);
             roundable=(WL.last_date>date);
             debugtext="up";
         if not roundable:
@@ -123,8 +174,22 @@ class TS:
         else:
             if date>WL.first_date: newdate=date;
             else: newdate=WL.first_date;
-        while newdate not in WL.date_index:
-            newdate=newdate+delta;
+        #start rounding
+        delta=WL.delta(newdate);
+        if not roundup:  
+            delta=-WL.delta(newdate);
+        
+        isfixeddelta=(WL.frequency!="monthly" and WL.frequency!="yearly");
+        if isfixeddelta:            
+            while newdate not in WL.date_index:
+                newdate=newdate+delta;
+        else:
+            while newdate not in WL.date_index:
+                delta=WL.delta(newdate);
+                if not roundup:  
+                    delta=-WL.delta(newdate);
+                newdate=newdate+delta;
+
         print(f"closest date found to {date} is: {newdate}")
         return newdate;
         
@@ -192,7 +257,6 @@ class TS:
             except KeyError:
                 md=[(fromdate,todate)];
                 return md;
-        countdays=0;
         for i in range(s+1,e+1):
             x=WL.getdate(i);
             y=WL.getdate(i-1);
