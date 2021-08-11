@@ -1,4 +1,4 @@
-import watlevpy.waterlevels as wal
+import watlevpy.time_series as wal
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -8,7 +8,7 @@ def plot(WL=None,fromdate=-1,todate=-1, gtype=1): #plots WL from fromdate to tod
     will use the first and last date from WL. gtype from 1 to 5 to see different styles
     """
     
-    WL=WL if WL else wal.WaterLevels();
+    WL=WL if WL else wal.TS();
     if(fromdate==-1): fromdate=WL.first_date;
     if(todate==-1): todate=WL.last_date;        
     dates=[];

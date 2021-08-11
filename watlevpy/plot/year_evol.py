@@ -1,4 +1,4 @@
-import watlevpy.waterlevels as wal
+import watlevpy.time_series as wal
 import watlevpy.stats.tools as tools
 import watlevpy.data as data
 import matplotlib.pyplot as plt
@@ -69,7 +69,7 @@ def months(WL,smooth=0,empty_format=None, miss_days_tol=31):
     endyear=WL.last_date.year;
     for month in range(1,12+1):
         monthdata.append(
-            wal.WaterLevels.get_month_from_years(WL,month,range(initialyear,endyear+1),miss_days_tol=miss_days_tol));
+            wal.TSFilter.get_month_from_years(WL,month,range(initialyear,endyear+1),miss_days_tol=miss_days_tol));
     monthaverages=[];
     numyears=len(monthdata[0]);
     novalueformat=620; #COLOR STRIPS FIX FORMAT
