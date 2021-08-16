@@ -15,7 +15,6 @@ class YearData:
     @classmethod    
     def sub_YearData(cls, yeardata, initialyear=None, endyear=None):
         d=dict();
-        first=True;
         ini=0;
         end=-1;
         for year in range(initialyear,endyear+1):

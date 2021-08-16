@@ -161,23 +161,29 @@ class TS:
             return date;
         except KeyError:
             pass;
-        roundable=(WL.first_date<date);
+        normdate=WL._normalize_date(date);
+        try:
+            WL.date_index[normdate];
+            return normdate;
+        except KeyError:
+            pass;
+        roundable=(WL.first_date<normdate);
         if roundup:
-            roundable=(WL.last_date>date);
+            roundable=(WL.last_date>normdate);
             debugtext="up";
         if not roundable:
            raise KeyError(f"date {date} can't be rounded {debugtext} because is outside of bounds"); 
         #We are roundable so we can try to start rounding from date or the boundaries, whichever closer
         if not roundup:
-            if date<WL.last_date: newdate=date;
+            if normdate<WL.last_date: newdate=normdate;
             else: newdate=WL.last_date;
         else:
-            if date>WL.first_date: newdate=date;
+            if normdate>WL.first_date: newdate=normdate;
             else: newdate=WL.first_date;
         #start rounding
         delta=WL.delta(newdate);
         if not roundup:  
-            delta=-WL.delta(newdate);
+            delta=-delta;
         
         isfixeddelta=(WL.frequency!="monthly" and WL.frequency!="yearly");
         if isfixeddelta:            
@@ -187,7 +193,7 @@ class TS:
             while newdate not in WL.date_index:
                 delta=WL.delta(newdate);
                 if not roundup:  
-                    delta=-WL.delta(newdate);
+                    delta=-delta;
                 newdate=newdate+delta;
 
         print(f"closest date found to {date} is: {newdate}")
@@ -203,7 +209,7 @@ class TS:
         e=TS.round_date(WL, todate);
         e=WL.getindex(e);
         indices=range(s,e+1);
-        sub=TS(WL.getwl(indices),WL.getdate(indices),WL.units);
+        sub=TS(WL.getwl(indices),WL.getdate(indices),WL.units,WL.frequency,WL.customdelta);
         return sub;
     
     @staticmethod    
@@ -211,6 +217,7 @@ class TS:
         """
         returns the number of missing days
         """
+        if 
         try:
             s=WL.getindex(fromdate);
         except KeyError:
