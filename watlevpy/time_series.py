@@ -2,7 +2,7 @@ import csv
 import datetime
 import calendar
 
-#I should use numpy to keep data size of simple data types as integers small.
+#I should use numpy to keep data size of simple data types like integers small.
         
 class TS:
     """
@@ -17,9 +17,8 @@ class TS:
     
     """
     
-    _frequencies=["daily","weekly","30monthly","365-yearly","monthly","yearly","custom",];
+    _frequencies=["daily","weekly","30monthly","365yearly","monthly","yearly","custom",];
     
-    #I need to add a new standard fr 30-day-month and regular month for the delta 
     def __init__(self, waterlevels=None, datesarray=None, units="", frequency="daily", customdelta=0): #class constructor
         """
         Use for raw python data, if reading from a file use any of the from_(filetype) constructors
@@ -45,6 +44,7 @@ class TS:
         m=len(datesarray);
         if n!=m :
             raise Exception(f"water levels and dates array are not the same size. Sizes are: {n} and {m}")
+        self._custom_delta=customdelta;
         if frequency=="custom":
             if customdelta!=0:
                 self._custom_delta=datetime.timedelta(days=customdelta);
@@ -61,7 +61,13 @@ class TS:
         if isinstance(i,int):
             return self.dates[i];
         return [self.dates[index] for index in i]
-        
+    
+    def _setdates(self,dates):
+        self.dates=dates;        
+    
+    def _setwl(self, wl):
+        self.wl=wl;
+    
     def getwl(self,i): #use range to acess several indices from it
         if isinstance(i,int):
             return self.wl[i];
@@ -209,15 +215,14 @@ class TS:
         e=TS.round_date(WL, todate);
         e=WL.getindex(e);
         indices=range(s,e+1);
-        sub=TS(WL.getwl(indices),WL.getdate(indices),WL.units,WL.frequency,WL.customdelta);
+        sub=TS(WL.getwl(indices),WL.getdate(indices),WL.units,WL.frequency,WL._custom_delta);
         return sub;
     
     @staticmethod    
     def num_missing_dates(WL,fromdate,todate): #returns the number of missing dates in WL from fromdate to todate
         """
-        returns the number of missing days
+        returns the number of missing days DAYS DAYS
         """
-        if 
         try:
             s=WL.getindex(fromdate);
         except KeyError:
@@ -295,8 +300,35 @@ class TS:
                 print(f"last consecutive day check at {md[i][1]}")
                 return True;
         return False;
+    
+    @staticmethod 
+    def missing_periods(): #missing function for different periods
+        pass;
+
+    
 
 class TSFilter:
+    
+    @staticmethod 
+    def averages_from_TS(WL, outfreq, customdelta=0):
+        aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
+        sdate=aux._normalize_date(WL.first_date);
+        edate=aux._normalize_date(WL.last_date);
+        rdates=[];
+        rwls=[];
+        
+        x=sdate;
+        oneday=datetime.timedelta(days=1);
+        while(x<=edate):
+            val=WL.get_time_window(x,x+aux.delta(x)-oneday);
+            if len(val)>0:
+                rdates.append(x);
+                rwls.append(sum(val)/len(val));
+                print(f"found {len(val)} values, expected {aux.delta(x)} from {aux.frequency} frequency");
+            else:
+                print("no values found in {x} ");
+            x=x+aux.delta(x);
+        return TS(rwls,rdates,WL.units,outfreq,customdelta);
     
     @staticmethod 
     def check_time_window(WL,fromdate,todate,miss_days_tol=0,consecutive_days_missed=0): #check from fromdate to todate
@@ -310,7 +342,7 @@ class TSFilter:
         passed=not (TS.is_missing_dates(WL, fromdate, todate, num_missing_dates=miss_days_tol) or
                 TS.is_missing_in_a_row(WL, fromdate, todate, max_consecutive_days=consecutive_days_missed))
         return passed;
-
+        
     @staticmethod 
     def check_week(WL,fromdate,miss_days_tol=0,consecutive_days_missed=7): #check a 7 day period 
         return TSFilter.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=7) ,miss_days_tol,consecutive_days_missed);
@@ -368,7 +400,6 @@ class TSFilter:
             years=[years];
         n=len(years);
         m=[];
-        addyear=[False]*n;
         for i in range(n):
                 #Does resizing impact performance too much in here??
                 if TSFilter.check_month(WL, years[i], month,miss_days_tol,consecutive_days_missed):

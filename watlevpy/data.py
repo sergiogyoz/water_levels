@@ -1,29 +1,17 @@
 import datetime
 import watlevpy.time_series as wal
+from watlevpy.time_series import TS 
 
-class YearData:
+class YearData(TS):
     """Raw data class used in the year evolution plotting"""
     
-    def __init__(self, d, initialyear, endyear):
+    def __init__(self, d, waterlevels=None, datesarray=None, units="", frequency="", customdelta=0):
+        super().__init__(waterlevels=None, datesarray=None, units=units, frequency=frequency, customdelta=customdelta)
+        initialyear=self.first_date.year;
+        endyear=self.last_date.year;
         years=range(initialyear, endyear+1);
-        self.d=d;
         self.first_year=initialyear;
         self.last_year=endyear;
-        self.n=len(years);
-
-
-    @classmethod    
-    def sub_YearData(cls, yeardata, initialyear=None, endyear=None):
-        d=dict();
-        ini=0;
-        end=-1;
-        for year in range(initialyear,endyear+1):
-            if year in yeardata: 
-                d[year]=yeardata[d];
-                if not ini:
-                    ini=year;
-                end=year;
-        return YearData(d, ini, end);
             
     @classmethod    
     def from_WL(cls, WL, initialyear=None, endyear=None): #you can probably put a year tolerance for years with too many missing days

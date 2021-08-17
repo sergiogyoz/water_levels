@@ -6,9 +6,9 @@ from matplotlib.animation import FuncAnimation
 
 
 #path for ffmpeg for the animation save/recording to work
-plt.rcParams['animation.ffmpeg_path']=".watlevpy/plot/ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe"
+plt.rcParams['animation.ffmpeg_path']="./watlevpy/plot/ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe"
 
-def animate(WL,smooth=2, save=False, interval=50 ,bitrate=100, filename="year_evol_animation",yeardata=None, units=""):
+def animate(WL,smooth=2, save=False, interval=50 ,bitrate=100, dpi=100, filename="year_evol_animation",fileformat="mp4",yeardata=None, units="", xfiguresize=6.4, yfiguresize=4.8):
     
     ys=data.YearData.from_WL(WL);
     sm=[];
@@ -17,6 +17,7 @@ def animate(WL,smooth=2, save=False, interval=50 ,bitrate=100, filename="year_ev
         sm.append(yeardata);
     #animation
     fig, ax= plt.subplots();
+    fig.set_size_inches(xfiguresize, yfiguresize)
     ax.set_xlim(0, 365);
     ax.set_ylim(580, 615);
     ax.set_xlabel("day of the year");
@@ -40,7 +41,8 @@ def animate(WL,smooth=2, save=False, interval=50 ,bitrate=100, filename="year_ev
                         save_count=len(ys.d))
     #save animation
     if save:
-        ani.save(filename+".mp4",bitrate=bitrate) #bitrate good quality around the 4000
+        print(plt.rcParams['animation.ffmpeg_path']);
+        ani.save(filename+"."+fileformat,bitrate=bitrate,dpi=dpi) #bitrate good quality around the 4000
     plt.show();
     return ani;
 
