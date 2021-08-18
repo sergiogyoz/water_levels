@@ -3,17 +3,40 @@ import watlevpy.stats.tools as tools
 import watlevpy.data as data
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import datetime
 
 
 #path for ffmpeg for the animation save/recording to work
 plt.rcParams['animation.ffmpeg_path']="./watlevpy/plot/ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe"
 
-def animate(WL,smooth=2, save=False, interval=50 ,bitrate=100, dpi=100, filename="year_evol_animation",fileformat="mp4",yeardata=None, units="", xfiguresize=6.4, yfiguresize=4.8):
+def animate(WL,fromyear=None,toyear=None,smooth=2, save=False, interval=50 ,bitrate=100, dpi=100, filename="year_evol_animation",
+            fileformat="mp4",yeardata=None, units="", xfiguresize=6.4, yfiguresize=4.8):
     
-    ys=data.YearData.from_WL(WL);
+    if not fromyear:
+        fromyear=WL.first_date.year;
+    if not toyear:
+        toyear=WL.last_date.year;
+    ys=range(fromyear,toyear+1);
+    
     sm=[];
-    for year in ys.d:
-        yeardata=tools.average_smoother(ys.d[year][1],ys.d[year][0],smooth);
+    days=[];
+    
+    #-----aux function
+    def toyeardays(date):
+        return date.toordinal()-datetime.date(date.year,1,1).toordinal();
+    #-----end
+    
+    for year in ys:
+        thisyear=WL.get_time_window_dates(datetime.date(year,1,1),datetime.date(year,12,31));
+        #----make this into a function if you ever make dates into day of the year again
+        dayoneordinal=datetime.date(year,1,1).toordinal();
+        thisyeardays=list(map(toyeardays,thisyear));
+        
+        #----up to here
+        yeardata=tools.average_smoother(WL.get_time_window(datetime.date(year,1,1),datetime.date(year,12,31)),
+                                        thisyear,
+                                        smooth);
+        days.append(thisyeardays);
         sm.append(yeardata);
     #animation
     fig, ax= plt.subplots();
@@ -23,22 +46,21 @@ def animate(WL,smooth=2, save=False, interval=50 ,bitrate=100, dpi=100, filename
     ax.set_xlabel("day of the year");
     ax.set_ylabel(f"water level ({WL.units})");
     ycounter=ax.text(160,610, '',fontsize=15);
-    lines=plt.plot(ys.d[ys.first_year][0], sm[0], '.',[], [],'.');
+    lines=plt.plot(days[0], sm[0], '.',[], [],'.');
     
     def init():
-        ycounter.set_text(f"year: {ys.first_year}");
+        ycounter.set_text(f"year: {ys[0]}");
         return lines[0],lines[1],ycounter;
     def update(frame):
         print(frame);
         ycounter.set_text(f"year: {frame}");
-        lines[1].set_data(ys.d[frame][0], sm[frame-ys.first_year]);
+        lines[1].set_data(days[frame-fromyear], sm[frame-fromyear]);
         return lines[0],lines[1],ycounter;
-        
     
-    ani = FuncAnimation(fig, update,frames=ys.d.keys(),
+    ani = FuncAnimation(fig, update,frames=ys,
                         interval=interval, repeat=False,
                         init_func=init, blit=True,
-                        save_count=len(ys.d))
+                        save_count=len(ys))
     #save animation
     if save:
         print(plt.rcParams['animation.ffmpeg_path']);
