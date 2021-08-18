@@ -38,7 +38,7 @@ def plot(WL=None,fromdate=-1,todate=-1, gtype=1): #plots WL from fromdate to tod
         wl.append(None);
     
     #dots curve
-    fig,axs= plt.subplots()
+    fig1,axs1= plt.subplots()
     plt.plot(ylabel=(f"water level {WL.units}"), xlabel=" date ");
     if gtype==1: plt.scatter(dates, wl ,marker=".");
     if gtype==2: plt.plot(dates,wl);
@@ -55,14 +55,15 @@ def plot(WL=None,fromdate=-1,todate=-1, gtype=1): #plots WL from fromdate to tod
     else:
         locator=mdates.AutoDateLocator(maxticks=6);
     
-    axs.xaxis.set_major_locator(locator);
-    axs.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
+    axs1.xaxis.set_major_locator(locator);
+    axs1.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
     
     #histogram
-    fig,axs=plt.subplots();
+    fig2,axs2=plt.subplots();
     plt.hist(WL.getwl(range(s,e+1)), edgecolor='#E6E6E6');
-    axs.set_xlabel(f"water level {WL.units}");
-    axs.set_axisbelow(True);
+    axs2.set_xlabel(f"water level {WL.units}");
+    axs2.set_axisbelow(True);
     plt.grid(color='#E6E6E6', linestyle='solid');
     
     plt.show();
+    return fig1,axs1,fig2,axs2;

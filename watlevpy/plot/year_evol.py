@@ -11,7 +11,7 @@ plt.rcParams['animation.ffmpeg_path']="./watlevpy/plot/ffmpeg-2021-07-04-essenti
 
 def animate(WL,fromyear=None,toyear=None,smooth=2, save=False, interval=50 ,bitrate=100, dpi=100, filename="year_evol_animation",
             fileformat="mp4",yeardata=None, units="", xfiguresize=6.4, yfiguresize=4.8):
-    
+    """You need to save the return of this variable in order so see/save the animation, otherwise it will be trashed"""
     if not fromyear:
         fromyear=WL.first_date.year;
     if not toyear:
@@ -29,10 +29,8 @@ def animate(WL,fromyear=None,toyear=None,smooth=2, save=False, interval=50 ,bitr
     for year in ys:
         thisyear=WL.get_time_window_dates(datetime.date(year,1,1),datetime.date(year,12,31));
         #----make this into a function if you ever make dates into day of the year again
-        dayoneordinal=datetime.date(year,1,1).toordinal();
-        thisyeardays=list(map(toyeardays,thisyear));
-        
-        #----up to here
+        thisyeardays=list(map(toyeardays,thisyear));        
+        #----
         yeardata=tools.average_smoother(WL.get_time_window(datetime.date(year,1,1),datetime.date(year,12,31)),
                                         thisyear,
                                         smooth);
@@ -68,24 +66,7 @@ def animate(WL,fromyear=None,toyear=None,smooth=2, save=False, interval=50 ,bitr
     plt.show();
     return ani;
 
-def averages(WL,smooth=2,empty_format=None, yeardata=None, units=None):
-    ys=data.YearData.from_WL(WL);
-    yearaverages=[];
-    for year in ys.d:
-        try:
-            yearaverages.append(sum(ys.d[year][1])/len(ys.d[year][1]));
-        except (ZeroDivisionError, TypeError):
-            print("data at index {i} is very empty");
-            yearaverages.append(None);
-    #smooth            
-    yearaverages=tools.average_smoother(yearaverages,m=smooth,empty_format=empty_format);
-    #plot
-    plt.figure();
-    ax=plt.subplot();
-    ax.set_xlabel("year");
-    ax.set_ylabel(f"water level average ({WL.units})");
-    plt.plot(range(ys.first_year, ys.last_year+1),yearaverages);
-    plt.show();
+#DEPRECATED use the average filter on yearly and plot it using simple.plot
 
 def months(WL,smooth=0,empty_format=None, miss_days_tol=31):
     monthdata=[];
@@ -111,7 +92,7 @@ def months(WL,smooth=0,empty_format=None, miss_days_tol=31):
                 currentmonth.append(novalueformat);#COLOR STRIPS FIX FORMAT
         monthaverages.append(currentmonth);
     #weird but fun thing #COLOR STRIPS FIX FORMAT
-    plt.figure();
+    fig=plt.figure();
     plt.imshow(monthaverages); # add parameter: interpolation='bilinear' if I want average_smoother colors
     #let's plot every month in a single figure
     trashfig,ax=plt.subplots(nrows=6,ncols=2,sharex=True,sharey=True);
@@ -120,3 +101,4 @@ def months(WL,smooth=0,empty_format=None, miss_days_tol=31):
         smonth=tools.average_smoother(monthaverages[month],m=smooth,empty_format=novalueformat);
         ax[month//2][month%2].plot( range(initialyear,endyear+1), smonth, marker='.')
     plt.show();
+    return fig;

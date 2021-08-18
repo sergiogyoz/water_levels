@@ -6,18 +6,13 @@ import calendar
         
 class TS:
     """
-    Water level data type for daily measurements and statistical analisys
-    
-    Attributes
-    ----------
-    wl : float array
-        the daily measurements of the water level
-    dates : datetime array
-        dates as datetime objects corresponding to the day of the wl measurements
+    Time Series base class for daily, monthly, yearly, and other period measurements. A 
+    placeholder for the data, used in the for plotting, applycation of statistical
+    analisys, reading of files and more!
     
     """
     
-    _frequencies=["daily","weekly","30monthly","365yearly","monthly","yearly","custom",];
+    _FREQUENCIES=["daily","weekly","30monthly","365yearly","monthly","yearly","custom",];
     
     def __init__(self, waterlevels=None, datesarray=None, units="", frequency="daily", customdelta=0): #class constructor
         """
@@ -308,7 +303,12 @@ class TS:
     
 
 class TSFilter:
-    
+    """
+    Utility filtering class for further statistical analysis from TS objects. 
+    Helps extract specific years or months from TS objects. It can extract the peaks, 
+    POTs, averages and more from a TS object. It also has several checks that return
+    true or false if data has holes, is missing too many dates, etc. 
+    """
     @staticmethod 
     def averages_from_TS(WL, outfreq, customdelta=0):#returns a TS object with the averages of a given frequency
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
@@ -355,6 +355,55 @@ class TSFilter:
         return TS(rwls,rdates,WL.units,outfreq,customdelta);
     
     @staticmethod 
+    def month_from_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
+        """
+        get data from a month in a given year(s). If data doesn't pass the test it returns the [-1] array.
+        if no data exist on the range but passes the test it returns an empty array [].
+        """
+        m=[];
+        ys=[];
+        if not years:
+            years=range(WL.first_date.year, WL.last_date.year);
+        aux=TS([-1],[WL.first_date],frequency="monthly");
+        for year in years:
+            firstdaymonth=datetime.date(year, month, 1);
+            lastdaymonth=datetime.date(year, month, 1)+aux.delta(firstdaymonth);
+            if TSFilter.check_time_window(WL, firstdaymonth, lastdaymonth,miss_days_tol,consecutive_days_missed):
+                values=WL.get_time_window(firstdaymonth,lastdaymonth);
+                dates=WL.get_time_window_dates(firstdaymonth,lastdaymonth);
+                mts=TS(values,dates,WL.units,WL.frequency,WL._custom_delta);
+                ys.append(year);
+                m.append(mts);
+            else:
+                print("Not enought {month} dates from {year} ");
+        rmts=dict(zip(ys,m));
+        return rmts;
+
+    def years_from_TS(WL,years,checkid=0,miss_day_tol=365,consecutive_days_missed=365):
+        """
+        returns a TS object with the data from the given years. If data doesn't pass the 
+        test or no data exist it skips that year. checkid=1 uses the miss_day_tol, 
+        checkid=2 uses the consecutive_days_missed
+        """
+        #if I want this to work more generally I should make the missing_periods function        
+        ts=[];
+        ds=[];
+        for year in years:
+            goodyear=True;
+            if checkid==1:
+                goodyear=TSFilter.check_year(WL, year, miss_day_tol, consecutive_days_missed);
+            if checkid==2:
+                goodyear=TSFilter.check_year_by_month(WL,year,miss_day_tol);
+            if goodyear:
+                ts.extend( WL.get_time_window(datetime.date(year,1,1), datetime.date(year,12,31)) );
+                ds.extend(WL.get_time_window_dates(datetime.date(year,1,1), datetime.date(year,12,31)));
+            else:
+                pass; #skipping bad years
+        
+        rts=TS(ts,ds,WL.units);
+        return rts;
+
+    @staticmethod 
     def check_time_window(WL,fromdate,todate,miss_days_tol=0,consecutive_days_missed=0): #check from fromdate to todate
         """
         returns false if the number of missing days is more than miss_day_tol. it also returns false if there are more
@@ -390,49 +439,7 @@ class TSFilter:
             if TSFilter.check_month(WL, fdm, miss_days_month) :
                 return False;
         return True;
-
-    @staticmethod
-    def get_years(WL,years,checkid=0,miss_day_tol=365,consecutive_days_missed=365):
-        """
-        gets wl data from the given years. If data doesn't pass the test in a year it returns the [-1] array for that year.
-        if no data exist on the range but passes the test it returns an empty array [].
-        """
-        
-        ys=[];
-        for year in years:
-            goodyear=True;
-            if checkid==1:
-                goodyear=TSFilter.check_year(WL, year, miss_day_tol, consecutive_days_missed);
-            if checkid==2:
-                goodyear=TSFilter.check_year_by_month(WL,year,miss_day_tol);
-            if goodyear:
-                ys.append( WL.get_time_window(datetime.date(year,1,1), datetime.date(year,12,31)) );
-            else:
-                ys.append([-1]);
-        
-        if isinstance(years, int) : return ys[0];
-        return ys;
     
-    @staticmethod
-    def get_month_from_years(WL,month,years,miss_days_tol=0,consecutive_days_missed=30):
-        """
-        get data from a month in a given year(s). If data doesn't pass the test it returns the [-1] array.
-        if no data exist on the range but passes the test it returns an empty array [].
-        """
-        
-        if isinstance(years,int): #if only a number then make it into a single value array
-            years=[years];
-        n=len(years);
-        m=[];
-        for i in range(n):
-                #Does resizing impact performance too much in here??
-                if TSFilter.check_month(WL, years[i], month,miss_days_tol,consecutive_days_missed):
-                    firstdayofmonth=datetime.date(years[i],1,1)+datetime.timedelta(days=30*(month-1));
-                    m.append(WL.get_time_window(firstdayofmonth,firstdayofmonth+datetime.timedelta(days=30-1)));
-                else:
-                    m.append([-1]);
-        return m;
-        
 
 class TSReader:
     
