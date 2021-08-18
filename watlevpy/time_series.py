@@ -310,7 +310,7 @@ class TS:
 class TSFilter:
     
     @staticmethod 
-    def averages_from_TS(WL, outfreq, customdelta=0):
+    def averages_from_TS(WL, outfreq, customdelta=0):#returns a TS object with the averages of a given frequency
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
         sdate=aux._normalize_date(WL.first_date);
         edate=aux._normalize_date(WL.last_date);
@@ -324,7 +324,31 @@ class TSFilter:
             if len(val)>0:
                 rdates.append(x);
                 rwls.append(sum(val)/len(val));
-                print(f"found {len(val)} values, expected {aux.delta(x)} from {aux.frequency} frequency");
+                #print(f"found {len(val)} values, expected {aux.delta(x)} from {aux.frequency} frequency");
+            else:
+                print("no values found in {x} ");
+            x=x+aux.delta(x);
+        return TS(rwls,rdates,WL.units,outfreq,customdelta);
+    
+    @staticmethod 
+    def peaks_from_TS(WL, outfreq, customdelta=0, maximum=True): #maximum false returns minimums
+        aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
+        sdate=aux._normalize_date(WL.first_date);
+        edate=aux._normalize_date(WL.last_date);
+        rdates=[];
+        rwls=[];
+        
+        x=sdate;
+        oneday=datetime.timedelta(days=1);
+        while(x<=edate):
+            val=WL.get_time_window(x,x+aux.delta(x)-oneday);
+            if len(val)>0:
+                rdates.append(x);
+                if maximum:
+                    rwls.append(max(val));
+                else:
+                    rwls.append(min(val));
+                #print(f"found {len(val)} values, expected {aux.delta(x)} from {aux.frequency} frequency");
             else:
                 print("no values found in {x} ");
             x=x+aux.delta(x);
