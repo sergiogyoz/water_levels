@@ -1,6 +1,5 @@
 import watlevpy.time_series as wal
 import watlevpy.stats.tools as tools
-import watlevpy.data as data
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import datetime
