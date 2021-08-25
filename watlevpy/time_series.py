@@ -299,8 +299,15 @@ class TS:
     @staticmethod 
     def missing_periods(): #missing function for different periods
         pass;
-
     
+    @staticmethod
+    def save_to_csv(WL,name,valuesonly=False):
+        with open(name+".csv","w",newline='') as csvfile:        
+            writer = csv.writer(csvfile);
+            for i in range(WL.n):
+                x=[] if valuesonly else [str(WL.dates[i])]; 
+                x.append(str(WL.wl[i]));
+                writer.writerow(x);
 
 class TSFilter:
     """
@@ -326,7 +333,7 @@ class TSFilter:
                 rwls.append(sum(val)/len(val));
                 #print(f"found {len(val)} values, expected {aux.delta(x)} from {aux.frequency} frequency");
             else:
-                print("no values found in {x} ");
+                print(f"no values found in {x} ");
             x=x+aux.delta(x);
         return TS(rwls,rdates,WL.units,outfreq,customdelta);
     
