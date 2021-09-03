@@ -6,24 +6,26 @@ import calendar
         
 class TS:
     """
-    Time Series base class for daily, monthly, yearly, and other period measurements. A 
-    placeholder for the data, used in the for plotting, applycation of statistical
-    analisys, reading of files and more!
+    TS is the base class for daily, monthly, yearly, and other period measurements. 
+    It is a placeholder for the data, which is used in the for plotting, application 
+    of statistical analisys, reading of files and more!
     
     """
-    
+    #this are the currently supported frequencies
     _FREQUENCIES=["daily","weekly","30monthly","365yearly","monthly","yearly","custom",];
     
     def __init__(self, waterlevels=None, datesarray=None, units="", frequency="daily", customdelta=0): #class constructor
         """
-        Use for raw python data, if reading from a file use any of the from_(filetype) constructors
+        Time series object instance. Use this constructor for raw python data, 
+        if reading from a file use any of the from_(filetype) functions in 
+        the TSReader class
         
         Parameters
         ----------
         waterlevels: float array
-            the daily measurements of the water level
+            array of the time series values
         datesarray: datetime array
-            dates as datetime objects corresponding to the day of the wl measurements 
+            dates as datetime objects corresponding to the day of the waterlevels measurements 
         units: string (optional)
             units of the wl measurements as a string
         frequency: string (optional)

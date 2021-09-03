@@ -16,11 +16,11 @@ WL=wal.TSReader.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="
 #foryearplot=wal.TS.sub_wl(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
 foryearplot=wal.TS.sub_wl(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
 
-yaver=wal.TSFilter.averages_from_TS(foryearplot, "yearly");
-wal.TS.save_to_csv(yaver,"myyeardata");
+yaver=wal.TSFilter.averages_from_TS(foryearplot, "monthly");
+#wal.TS.save_to_csv(yaver,"myyeardata");
 
 
-#wplot.plot(yaver,gtype=2);
+fig1,axs1,fig2,axs2 =wplot.plot(yaver,gtype=2,dataname="water levels");
 
 #ypeaks=wal.TSFilter.peaks_from_TS(WL, "monthly");
 #wplot.plot(ypeaks,gtype=1);
@@ -33,6 +33,9 @@ wal.TS.save_to_csv(yaver,"myyeardata");
 #Februaries=wal.TSFilter.month_from_years_from_TS(WL, month=2);
 
 #wplot.plot(decade);
+
+
+"""
 
 #-----Let's do some testing
 
@@ -60,7 +63,7 @@ print(arimafit.summary())
 arimafit.plot_predict(dynamic=False);
 plt.show();
 
-
+"""
 
 
 
