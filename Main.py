@@ -13,11 +13,13 @@ import statsmodels.graphics.tsaplots as smgt
 import statsmodels.tsa.arima_model as smta
 
 WL=wal.TSReader.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
-#foryearplot=wal.TS.sub_wl(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
-foryearplot=wal.TS.sub_wl(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
+#foryearplot=wal.TS.sub_TS(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
+foryearplot=wal.TS.sub_TS(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
 
 yaver=wal.TSFilter.averages_from_TS(foryearplot, "monthly");
+ypeaks=wal.TSFilter.POT_from_TS(WL, 604);
 #wal.TS.save_to_csv(yaver,"myyeardata");
+
 
 
 fig1,axs1,fig2,axs2 =wplot.plot(yaver,gtype=2,dataname="water levels");
