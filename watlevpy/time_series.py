@@ -3,7 +3,8 @@ import datetime
 import calendar
 
 #I should use numpy to keep data size of simple data types like integers small.
-        
+
+#Whenever you see WL it is an instance of a TS object, it used to stand for WaterLevels
 class TS:
     """
     TS is the base class for daily, monthly, yearly, and other period measurements. 
@@ -78,10 +79,10 @@ class TS:
             return self.date_index[date];
         return [self.date_index[d] for d in date];
     
-    def get_time_window(self,fromdate,todate): #returns the existing water level values from fromdate to todate
+    def get_time_window(self,fromdate,todate): #returns the existing time series values from fromdate to todate
         """
-        Returns the water level values from from date to todate (it does not keep track of the dates, 
-        use for extracting wl values only). If rounding down or up is impossible inside the data it returns
+        Returns the time series values from fromdate to todate (it does not keep track of the dates, 
+        use for extracting values only). If rounding down or up is impossible inside the data it returns
         an empty array. If rounding is possible but the range contains no values it returns an empty array.
         """
         
@@ -135,7 +136,6 @@ class TS:
         newdate= datetime.date.fromordinal(dateordinal-(dateordinal-firstday)%delta);
         return newdate;
 
-    
     def get_time_window_dates(self,fromdate,todate):
         """
         returns the existing dates from fromdate to todate on the object.
@@ -152,8 +152,12 @@ class TS:
     @staticmethod 
     def round_date(WL,date,roundup=False): #rounds down the date in the array (if possible)
         """
-        defaults to rounding down. Set roundup to True to round up. Impossible to round if
-        round up above data or rounding down below data, in which case it throws a KeyError Exception. 
+        This method takes a datetime.date object and rounds it to a date inside the
+        WL object. It defaults to rounding down (roundup=False).
+
+        Impossible to round if rounding up above data or rounding down below data, 
+        in which case it throws a KeyError Exception. 
+
         It uses the corresponding frequency to calculate the "next" or "previous" date.
         """
         
@@ -206,7 +210,11 @@ class TS:
         raise IndexError("The date can't be rounded in the dates array");
  
     @staticmethod 
-    def sub_wl(WL,fromdate,todate):
+    def sub_TS(WL,fromdate,todate):
+        """
+        Creates a TS object with the same parameters as WL with the range between 
+        fromdate to todate.
+        """
         s=TS.round_date(WL, fromdate,roundup=True);
         s=WL.getindex(s);
         e=TS.round_date(WL, todate);
@@ -216,9 +224,9 @@ class TS:
         return sub;
     
     @staticmethod    
-    def num_missing_dates(WL,fromdate,todate): #returns the number of missing dates in WL from fromdate to todate
+    def num_missing_dates(WL,fromdate,todate): #returns the number of missing DAYS in WL from fromdate to todate
         """
-        returns the number of missing days DAYS DAYS
+        returns the number of missing days DAYS DAYS (only works for daily data)
         """
         try:
             s=WL.getindex(fromdate);
@@ -239,9 +247,10 @@ class TS:
         return (todate-fromdate).days-(e-s);
         
     @staticmethod
-    def missing_dates(WL,fromdate,todate): #returns missing days in WL from fromdate to todate
+    def missing_dates(WL,fromdate,todate): #returns missing DAYS in WL from fromdate to todate
         """
-        Returns an array of 2-tuples (a,b) such that the run from day a to day b are missing days
+        Returns an array of pairs (firstdaymiss,lastdatemiss) where the run from 
+        firstdaymiss to lastdaymiss are missing days.
         """
         
         md=[]
@@ -279,7 +288,7 @@ class TS:
     @staticmethod            
     def is_missing_dates(WL,fromdate,todate, num_missing_dates=0): #returns true if WL is missing more than num_missing_dates
         """
-        True if there are num_missing_dates or more missing dates from fromdate to todate. Otherwise returns false
+        True if there are num_missing_dates or more missing DAYS from fromdate to todate. Otherwise returns false
         """
         
         if(TS.num_missing_dates(WL, fromdate, todate)>num_missing_dates): return True;
@@ -320,12 +329,15 @@ class TSFilter:
     """
     @staticmethod 
     def averages_from_TS(WL, outfreq, customdelta=0):#returns a TS object with the averages of a given frequency
+        """
+        It returns a TS object with outfreq (e.g. monthly) averages from WL. The input can be any TS object
+        """
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
         sdate=aux._normalize_date(WL.first_date);
         edate=aux._normalize_date(WL.last_date);
         rdates=[];
         rwls=[];
-        
+
         x=sdate;
         oneday=datetime.timedelta(days=1);
         while(x<=edate):
@@ -340,7 +352,10 @@ class TSFilter:
         return TS(rwls,rdates,WL.units,outfreq,customdelta);
     
     @staticmethod 
-    def peaks_from_TS(WL, outfreq, customdelta=0, maximum=True): #maximum false returns minimums
+    def peaks_from_TS(WL, outfreq, customdelta=0, maximum=True): #returns max peaks every outfreq (e.g. monthly)
+        """
+        It returns a TS object with outfreq (e.g. monthly) maximums or minimums from WL. The input can be any TS object.
+        """        
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
         sdate=aux._normalize_date(WL.first_date);
         edate=aux._normalize_date(WL.last_date);
@@ -363,6 +378,27 @@ class TSFilter:
             x=x+aux.delta(x);
         return TS(rwls,rdates,WL.units,outfreq,customdelta);
     
+    @staticmethod 
+    def POT_from_TS(WL, threshold, over=True): #returns a TS object with the Peaks Over Threshold
+        """
+        It returns a TS objects with the values that are larger than
+        the threshold parameter. The input can be any TS object.
+        """        
+        rdates=[];
+        rwls=[];
+        
+        for index in range(WL.n):
+            add=False;
+            if over and (WL.wl[index]>threshold):#if over threshold
+                add=True;
+            if (not over) and WL.wl[index]<threshold:#if under threshold
+                add=True;
+            if add: #add date and value
+                rwls.append(WL.wl[index]);
+                rdates.append(WL.dates[index]);
+        return TS(rwls,rdates,WL.units,WL.frequency,WL._custom_delta);
+
+
     @staticmethod 
     def month_from_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
         """
