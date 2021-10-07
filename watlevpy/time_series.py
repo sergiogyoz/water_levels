@@ -541,7 +541,8 @@ class TSReader:
             wl=wl[:n];
             return TS(waterlevels=wl,datesarray=dates,units=units);
 
-    
+
+#DEPRECATED, use a TSFilter instead
 def peaks(WL,fromdate,todate,window_size,max_missing_dates=0):
     """
     Returns an array of peak values for disjoint windows of window size from fromdate to todate

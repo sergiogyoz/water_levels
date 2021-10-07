@@ -1,8 +1,7 @@
 import numpy as np
 import watlevpy.time_series as wal #base class for time series
 #for plotting
-import watlevpy.plot.year_evol as yevol
-import watlevpy.plot.simple as wplot
+import watlevpy.plot.plot as wplot
 import matplotlib.pyplot as plt
 #datetime default library
 import datetime
@@ -22,19 +21,19 @@ ypeaks=wal.TSFilter.POT_from_TS(WL, 604);
 
 
 
-fig1,axs1,fig2,axs2 =wplot.plot(yaver,gtype=2,dataname="water levels");
+fig1,axs1,fig2,axs2 =wplot.plotTS(yaver,gtype=2,dataname="water levels");
 
 #ypeaks=wal.TSFilter.peaks_from_TS(WL, "monthly");
-#wplot.plot(ypeaks,gtype=1);
+#wplot.plotTS(ypeaks,gtype=1);
 
-#donttrashme=yevol.animate(foryearplot);
-#yevol.months(WL,smooth=2);
+donttrashme=wplot.YearEvol.animate(foryearplot);
+wplot.YearEvol.months(WL,smooth=2);
 
 #decade=wal.TSFilter.years_from_TS(WL, range(2000,2010+1));
 
 #Februaries=wal.TSFilter.month_from_years_from_TS(WL, month=2);
 
-#wplot.plot(decade);
+#wplot.plotTS(decade);
 
 
 """
