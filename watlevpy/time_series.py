@@ -223,6 +223,24 @@ class TS:
         sub=TS(WL.getwl(indices),WL.getdate(indices),WL.units,WL.frequency,WL._custom_delta);
         return sub;
     
+    @staticmethod
+    def save_to_csv(WL,name,valuesonly=False):
+        with open(name+".csv","w",newline='') as csvfile:        
+            writer = csv.writer(csvfile);
+            for i in range(WL.n):
+                x=[] if valuesonly else [str(WL.dates[i])]; 
+                x.append(str(WL.wl[i]));
+                writer.writerow(x);
+
+class TSFilter:
+    """
+    Utility filtering class for further statistical analysis from TS objects. 
+    Helps extract specific years or months from TS objects. It can extract the peaks, 
+    POTs, averages and more from a TS object. It also has several checks that return
+    true or false if data has holes, is missing too many dates, etc. 
+    """
+    
+    #--------BASE FUNCTIONS FOR THE CHECKS, CAREFUL WHEN EDITING THESE
     @staticmethod    
     def num_missing_dates(WL,fromdate,todate): #returns the number of missing DAYS in WL from fromdate to todate
         """
@@ -291,7 +309,7 @@ class TS:
         True if there are num_missing_dates or more missing DAYS from fromdate to todate. Otherwise returns false
         """
         
-        if(TS.num_missing_dates(WL, fromdate, todate)>num_missing_dates): return True;
+        if(TSFilter.num_missing_dates(WL, fromdate, todate)>num_missing_dates): return True;
         return False;
 
     @staticmethod 
@@ -300,7 +318,7 @@ class TS:
         returns true if there are more than max_consecutive_days consecutive days missing from fromdate to todate
         """
         
-        md=TS.missing_dates(WL,fromdate,todate);
+        md=TSFilter.missing_dates(WL,fromdate,todate);
         for i in range(len(md)):
             if (md[i][1]-md[i][0]).days+1>max_consecutive_days:
                 print(f"last consecutive day check at {md[i][1]}")
@@ -311,22 +329,8 @@ class TS:
     def missing_periods(): #missing function for different periods
         pass;
     
-    @staticmethod
-    def save_to_csv(WL,name,valuesonly=False):
-        with open(name+".csv","w",newline='') as csvfile:        
-            writer = csv.writer(csvfile);
-            for i in range(WL.n):
-                x=[] if valuesonly else [str(WL.dates[i])]; 
-                x.append(str(WL.wl[i]));
-                writer.writerow(x);
-
-class TSFilter:
-    """
-    Utility filtering class for further statistical analysis from TS objects. 
-    Helps extract specific years or months from TS objects. It can extract the peaks, 
-    POTs, averages and more from a TS object. It also has several checks that return
-    true or false if data has holes, is missing too many dates, etc. 
-    """
+    #-----------------HERE THEY END
+    
     @staticmethod 
     def averages_from_TS(WL, outfreq, customdelta=0):#returns a TS object with the averages of a given frequency
         """
@@ -457,8 +461,8 @@ class TSFilter:
         general function to check if there are missing days and missing consecutive days in a window
         """
         
-        passed=not (TS.is_missing_dates(WL, fromdate, todate, num_missing_dates=miss_days_tol) or
-                TS.is_missing_in_a_row(WL, fromdate, todate, max_consecutive_days=consecutive_days_missed))
+        passed=not (TSFilter.is_missing_dates(WL, fromdate, todate, num_missing_dates=miss_days_tol) or
+                TSFilter.is_missing_in_a_row(WL, fromdate, todate, max_consecutive_days=consecutive_days_missed))
         return passed;
         
     @staticmethod 
