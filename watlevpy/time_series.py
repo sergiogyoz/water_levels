@@ -212,7 +212,7 @@ class TS:
     @staticmethod 
     def sub_TS(WL,fromdate,todate):
         """
-        Creates a TS object with the same parameters as WL with the range between 
+        Returns a TS object with the same parameters as WL with the range between 
         fromdate to todate.
         """
         s=TS.round_date(WL, fromdate,roundup=True);
@@ -540,35 +540,3 @@ class TSReader:
             dates=dates[:n];
             wl=wl[:n];
             return TS(waterlevels=wl,datesarray=dates,units=units);
-
-
-#DEPRECATED, use a TSFilter instead
-def peaks(WL,fromdate,todate,window_size,max_missing_dates=0):
-    """
-    Returns an array of peak values for disjoint windows of window size from fromdate to todate
-    
-    Parameters
-    ----------
-    fromdate: datetime.date
-        starting date in the datetime.date class
-    todate: datetime.date
-        ending date in the datetime.date class
-    window_size: int
-        size of the window in days for the peaks
-    max_missing_dates: int
-        maximum number of missing dates it tolerates in a window
-    """
-    
-    s=WL.getindex(fromdate);
-    e=WL.getindex(todate);
-    
-    num_windows=int(((e-s)+1)/window_size);
-    peak_array=[0]*num_windows;
-    aux=s;
-    for i in range(0,num_windows):
-        peak_array[i]=max(WL.getwl(range(aux,aux+window_size)));
-        aux=aux+window_size;
-    return peak_array;
-    
-    
-    
