@@ -559,12 +559,12 @@ def gets_check():
             ]: something_broke("time window broke");
     
 def missing_days_check(): 
-    num=wal.TS.num_missing_dates(data, datetime.date(1891, 1, 1), datetime.date(1891, 12, 31));
+    num=wal.TSFilter.num_missing_dates(data, datetime.date(1891, 1, 1), datetime.date(1891, 12, 31));
     if num!=113 : something_broke("number of missing days");
     
-    if wal.TS.is_missing_dates(data, datetime.date(1891,10,4), datetime.date(1891,11,27)):
+    if wal.TSFilter.is_missing_dates(data, datetime.date(1891,10,4), datetime.date(1891,11,27)):
         something_broke("is_missing days is (strangely) broken")
-    if not wal.TS.is_missing_dates(data, datetime.date(1891,10,1), datetime.date(1891,11,27)):
+    if not wal.TSFilter.is_missing_dates(data, datetime.date(1891,10,1), datetime.date(1891,11,27)):
         something_broke("is_missing days is (strangely) broken")    
     realmissingdates=[
         (datetime.date(1891, 2, 1),datetime.date(1891,2,25)),
@@ -574,13 +574,13 @@ def missing_days_check():
         (datetime.date(1891, 12, 26),datetime.date(1892,1,3)),
         (datetime.date(1892, 1, 6),datetime.date(1892,1,31)),
         ]
-    if wal.TS.missing_dates(data, datetime.date(1891,2,1), datetime.date(1892, 1, 31))!=realmissingdates:
+    if wal.TSFilter.missing_dates(data, datetime.date(1891,2,1), datetime.date(1892, 1, 31))!=realmissingdates:
         something_broke("ranges of missing dates are wrong");
-    if wal.TS.is_missing_in_a_row(data, datetime.date(1891,2,1), datetime.date(1891,2,9), 9):
+    if wal.TSFilter.is_missing_in_a_row(data, datetime.date(1891,2,1), datetime.date(1891,2,9), 9):
         something_broke("missing more days than there are");
-    if not wal.TS.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 9):
+    if not wal.TSFilter.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 9):
         something_broke("number of days missing in a row having issues");
-    if wal.TS.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 10):
+    if wal.TSFilter.is_missing_in_a_row(data, datetime.date(1891,9,1), datetime.date(1891,10,31), 10):
         something_broke("number of days missing in a row having issues");
 
 def checks_check():
