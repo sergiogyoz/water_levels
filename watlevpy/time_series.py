@@ -35,9 +35,12 @@ class TS:
             a custom time delta for a custom frequency. It only works if the frequency is set to "custom".
         """
         waterlevels=waterlevels if waterlevels else [];
-        datesarray=datesarray if datesarray else [];        
-        self.first_date=datesarray[0];
-        self.last_date=datesarray[-1];
+        datesarray=datesarray if datesarray else [];  
+        try:
+            self.first_date=datesarray[0];
+            self.last_date=datesarray[-1];
+        except IndexError:
+            print("empty TS object")
         n=len(waterlevels);
         m=len(datesarray);
         if n!=m :
@@ -92,11 +95,11 @@ class TS:
             e=TS.round_date(self, todate);
             e=self.getindex(e);        
         except KeyError:
-            print("range outside of bounds")
+            print(f"range {fromdate} to {todate} is outside of bounds");
             return [];
         return [self.wl[i] for i in range(s,e+1)];
     
-    def delta(self,currentdate=None):
+    def delta(self,currentdate=None,forward=True):
         """
         time delta based on the frequency of the time series. If needed e.g., monthly delta changes each month,
         current date should be provided as a datetime object.
@@ -113,11 +116,21 @@ class TS:
         if self.frequency=="monthly":
             if currentdate==None:
                 raise ValueError("no currentdate provided");
-            d=datetime.timedelta(days=calendar.monthrange(currentdate.year,currentdate.month)[1]);
+            if forward:
+                d=datetime.timedelta(days=calendar.monthrange(currentdate.year,currentdate.month)[1]);
+            else:
+                aux=TS(frequency="monthly");
+                prev_month_date=aux._normalize_date(currentdate)-datetime.timedelta(days=1);
+                d=datetime.timedelta(days=calendar.monthrange(prev_month_date.year,prev_month_date.month)[1]);                
         if self.frequency=="yearly":
             if currentdate==None:
                 raise ValueError("no currentdate provided");
-            d=datetime.timedelta(days=365+calendar.isleap(currentdate.year));
+            if forward:
+                d=datetime.timedelta(days=365+calendar.isleap(currentdate.year));
+            else:
+                aux=TS(frequency="yearly");
+                prev_year_date=aux._normalize_date(currentdate)-datetime.timedelta(days=1);
+                d=datetime.timedelta(days=365+calendar.isleap(prev_year_date.year));
         if self.frequency=="custom":
             d=self._custom_delta;
         return d;
@@ -139,14 +152,19 @@ class TS:
     def get_time_window_dates(self,fromdate,todate):
         """
         returns the existing dates from fromdate to todate on the object.
-        If rounding down or up is impossible inside the data it throws an error. If rounding is possible 
-        but the range contains no values it returns an empty array.
+        If rounding down or up is impossible inside the data it returns and
+        empty array. If rounding is possible but the range contains no values
+        it returns an empty array.
         """
         
-        s=TS.round_date(self, fromdate,roundup=True);
-        s=self.getindex(s);
-        e=TS.round_date(self, todate);
-        e=self.getindex(e); 
+        try:
+            s=TS.round_date(self, fromdate,roundup=True);
+            s=self.getindex(s);
+            e=TS.round_date(self, todate);
+            e=self.getindex(e); 
+        except KeyError:
+            print(f"range {fromdate} to {todate} is outside of bounds");
+            return [];
         return [self.dates[i] for i in range(s,e+1)];
     
     @staticmethod 
@@ -334,7 +352,8 @@ class TSFilter:
     @staticmethod 
     def averages_from_TS(WL, outfreq, customdelta=0):#returns a TS object with the averages of a given frequency
         """
-        It returns a TS object with outfreq (e.g. monthly) averages from WL. The input can be any TS object
+        It returns a TS object with outfreq frequency (e.g. monthly) averages 
+        from WL. The input can be any TS object
         """
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
         sdate=aux._normalize_date(WL.first_date);
@@ -406,8 +425,12 @@ class TSFilter:
     @staticmethod 
     def month_from_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
         """
-        get data from a month in a given year(s). If data doesn't pass the test it returns the [-1] array.
-        if no data exist on the range but passes the test it returns an empty array [].
+        Returns a dictionary with keys being the year and values being the 
+        TS object(s) from a month in a (the) given year(s), e.g.
+        all Februaries from 1980 to 2010.
+        
+        If data doesn't pass the test it returns the [-1] array. if no data exist 
+        on the range but passes the test it returns an empty array [].
         """
         m=[];
         ys=[];
@@ -416,13 +439,13 @@ class TSFilter:
         aux=TS([-1],[WL.first_date],frequency="monthly");
         for year in years:
             firstdaymonth=datetime.date(year, month, 1);
-            lastdaymonth=datetime.date(year, month, 1)+aux.delta(firstdaymonth);
+            lastdaymonth=datetime.date(year, month, 1)+aux.delta(firstdaymonth)-datetime.timedelta(days=1); #not the actual last day of the month
             if TSFilter.check_time_window(WL, firstdaymonth, lastdaymonth,miss_days_tol,consecutive_days_missed):
                 values=WL.get_time_window(firstdaymonth,lastdaymonth);
                 dates=WL.get_time_window_dates(firstdaymonth,lastdaymonth);
-                mts=TS(values,dates,WL.units,WL.frequency,WL._custom_delta);
+                mTS=TS(values,dates,WL.units,WL.frequency,WL._custom_delta);
                 ys.append(year);
-                m.append(mts);
+                m.append(mTS);
             else:
                 print("Not enought {month} dates from {year} ");
         rmts=dict(zip(ys,m));

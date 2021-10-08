@@ -4,7 +4,7 @@ def average_smoother(values, continuity_indices=[], m=0, dates=True ,empty_forma
     """
     returns an array of smoother values using the average of the 2m+1 values center around each value. It makes an average
     of those avaliable if there are missing values. Edge values, or in general more isolated points, are biased being 
-    calculated from less values
+    calculated from only the avaliable around.
     """   
     #there's a potential increase of m times the speed if we change the logic of this to work by keeping a 
     #window of 5 and a mask on the valid values an moving it from start to end
