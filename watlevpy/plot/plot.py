@@ -80,11 +80,17 @@ def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels"): #plo
     return fig1,axs1,fig2,axs2;
 
 class YearEvol:
+    """Functions related to year evolution graphs"""
         
     @staticmethod 
     def animate(WL,fromyear=None,toyear=None,smooth=2, save=False, interval=50 ,bitrate=100, dpi=100, filename="year_evol_animation",
                 fileformat="mp4",yeardata=None, units="", xfiguresize=6.4, yfiguresize=4.8):
-        """You need to save the return of this variable in order so see/save the animation, otherwise it will be trashed"""
+        """
+        Creates an animation running from fromyear to toyear displaying each year.
+        
+        You need to save the return of this variable in order so see/save
+        the animation, otherwise it will be trashed.
+        """
         if not fromyear:
             fromyear=WL.first_date.year;
         if not toyear:
@@ -139,38 +145,47 @@ class YearEvol:
         plt.show();
         return ani;
     
-    #DEPRECATED use the average filter on yearly and plot it using simple.plot
-    def months(WL,smooth=0,empty_format=None, miss_days_tol=31):
-        monthdata=[];
-        initialyear=WL.first_date.year;
-        endyear=WL.last_date.year;
-        for month in range(1,12+1):
-            monthdata.append(
-                wal.TSFilter.get_month_from_years(WL,month,range(initialyear,endyear+1),miss_days_tol=miss_days_tol));
+    def months(WL,fromyear=None,toyear=None,months=None,smooth=0,empty_format=None):
+        """
+        Creates a plot displaying the month average evolution for each month.
+        Returns the figure and the axis of the plot
+        """
+        if not fromyear:
+            fromyear=WL.first_date.year;
+        if not toyear:
+            toyear=WL.last_date.year;
+        years=range(fromyear,toyear+1);
+        
+        if not months:
+            months=list(range(1,12+1));
+        
+        averages=wal.TSFilter.averages_from_TS(WL,"monthly");
+        
         monthaverages=[];
-        numyears=len(monthdata[0]);
-        novalueformat=620; #COLOR STRIPS FIX FORMAT
-        for month in range(12):
-            currentmonth=[];
-            for year in range(numyears):
-                total=0; n=0;
-                for i in range(len(monthdata[month][year])):
-                    if monthdata[month][year][i]!=-1:
-                        total= total+monthdata[month][year][i];
-                        n=n+1;
+        for month in months:
+            month_averagesTSdict=wal.TSFilter.month_from_years_from_TS(
+                averages,month,years,miss_days_tol=99,consecutive_days_missed=99);
+            this_month_averages=[];
+            for year in month_averagesTSdict:
                 try:
-                    currentmonth.append(total/n);
-                except ZeroDivisionError:
-                    currentmonth.append(novalueformat);#COLOR STRIPS FIX FORMAT
-            monthaverages.append(currentmonth);
+                    this_month_averages.append(
+                        month_averagesTSdict[year].getwl(0));
+                except IndexError:
+                    this_month_averages.append(None);
+            monthaverages.append(this_month_averages);
+                
         #weird but fun thing #COLOR STRIPS FIX FORMAT
-        fig=plt.figure();
-        plt.imshow(monthaverages); # add parameter: interpolation='bilinear' if I want average_smoother colors
+        #fig=plt.figure();
+        #plt.imshow(monthaverages); # add parameter: interpolation='bilinear' if I want average_smoother colors
+        
         #let's plot every month in a single figure
-        trashfig,ax=plt.subplots(nrows=6,ncols=2,sharex=True,sharey=True);
+        numplots=len(months);
+        tsfig,ax=plt.subplots(nrows=numplots//2+numplots%2,ncols=2,sharex=True,sharey=True);
         ax[0][0].set_ylim(585, 615);
-        for month in range(12):
-            smonth=tools.average_smoother(monthaverages[month],m=smooth,empty_format=novalueformat);
-            ax[month//2][month%2].plot( range(initialyear,endyear+1), smonth, marker='.')
+        for monthindex in range(len(months)):
+            smonth=tools.average_smoother(monthaverages[monthindex],m=smooth,empty_format=empty_format);
+            ax[monthindex//2][monthindex%2].plot(range(fromyear,toyear+1), smonth, marker='.');
+            ax[monthindex//2][monthindex%2].set_title(datetime.date(1, months[monthindex], 1).strftime('%B'));
+        tsfig.tight_layout();
         plt.show();
-        return fig;
+        return tsfig,ax;

@@ -208,7 +208,7 @@ class TS:
         #start rounding
         delta=WL.delta(newdate);
         if not roundup:  
-            delta=-delta;
+            delta=-WL.delta(newdate,False);
         
         isfixeddelta=(WL.frequency!="monthly" and WL.frequency!="yearly");
         if isfixeddelta:            
@@ -218,7 +218,7 @@ class TS:
             while newdate not in WL.date_index:
                 delta=WL.delta(newdate);
                 if not roundup:  
-                    delta=-delta;
+                    delta=-WL.delta(newdate,False);
                 newdate=newdate+delta;
 
         print(f"closest date found to {date} is: {newdate}")
@@ -447,7 +447,10 @@ class TSFilter:
                 ys.append(year);
                 m.append(mTS);
             else:
-                print("Not enought {month} dates from {year} ");
+                mTS=TS([],[],WL.units,WL.frequency,WL._custom_delta);
+                ys.append(year);
+                m.append(mTS);
+                print(f"Not enought {datetime.date(1,month,1).strftime('%B')} dates in {year} ");
         rmts=dict(zip(ys,m));
         return rmts;
 
