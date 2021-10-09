@@ -69,6 +69,25 @@ class TS:
     def _setwl(self, wl):
         self.wl=wl;
     
+    def __repr__(self): 
+        try:
+            self.wl[0];
+            return f"[{self.first_date}:{self.wl[0]},..., {self.last_date}:{self.wl[-1]}]"; 
+        except IndexError:
+            return f"TS empty";
+    def __str__(self): 
+        try:
+            self.wl[0];
+            rstr=f"time: {self.first_date},..., {self.last_date} \n";
+            rstr=rstr+f"frequency: {self.frequency} \n";
+            rstr=rstr+f"units: {self.units} \n";
+            rstr=rstr+f"lenght: {self.n} \n";
+            rstr=rstr+f"values: {self.wl[0]},...,{self.wl[-1]}";
+            return rstr; 
+        except IndexError:
+            return "  empty TS object  ";
+        
+        
     def getwl(self,i): #use range to acess several indices from it
         if isinstance(i,int):
             return self.wl[i];
@@ -570,3 +589,64 @@ class TSReader:
             dates=dates[:n];
             wl=wl[:n];
             return TS(waterlevels=wl,datesarray=dates,units=units);
+
+    @classmethod
+    def from_USGS(cls,csvfile,dateformat="%m/%d/%Y", units="ft"): #reads TS from csvfile
+        """
+        Creates instance of TS class from a two column file in the default USGS tab
+        separated format
+        
+        The first column of the csv are the dates and the second one the water levels. If using csv files 
+        imported from excel save as csv (MS-DOS)
+        
+        Parameters
+        ----------
+        csvfile: str
+            relative path to the csv file. 
+            e.g. "relative/path/user/data.csv"
+        headers: bool
+            (defaults to True) True if file has headers which are then removed, if only raw data then false.
+        dateformat: str
+            format of the dates on the data following the format codes for datetime.datetime.strftime. 
+            e.g. "%m/%d/%Y %H:%M"
+        """
+        
+        with open(csvfile,newline='') as csvdata:
+            mydata=list(csv.reader(
+                csvdata,
+                delimiter="\t"
+                ));
+            
+            while(mydata[0][0][0]=='#'):
+                x=mydata.pop(0);        
+            if True:
+                mydata.pop(0);
+            m=len(mydata);
+            wl=[0]*m;
+            dates=[0]*m;
+            n=0;
+            for i in range(0,m):
+                parseable=False;
+                try:
+                    wl[n]=float(mydata[i][1]);
+                    parseable=True;
+                except ValueError:
+                    pass;
+                except:
+                    print("Unexpected error while reading water values");
+                    raise;
+                else:
+                    n=n+1;
+                if parseable:
+                    try:
+                        x=datetime.datetime.strptime(mydata[i][0],dateformat).date();
+                    except ValueError:
+                        print( f"format on date entry {str(i)} is wrong: {str(mydata[i][0])}" );
+                    else:
+                        dates[n-1]=x;
+            if(m-n>0):
+                print(f"There are {m-n} wrong format water levels (possibly missing dates)");
+            dates=dates[:n];
+            wl=wl[:n];
+            return TS(waterlevels=wl,datesarray=dates,units=units);
+
