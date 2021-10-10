@@ -591,7 +591,7 @@ class TSReader:
             return TS(waterlevels=wl,datesarray=dates,units=units);
 
     @classmethod
-    def from_USGS(cls,csvfile,dateformat="%m/%d/%Y", units="ft"): #reads TS from csvfile
+    def from_USGS(cls,csvfile,site_code,param_code,dateformat="%m/%d/%Y", units="ft"): #reads TS from csvfile
         """
         Creates instance of TS class from a two column file in the default USGS tab
         separated format
@@ -616,11 +616,11 @@ class TSReader:
                 csvdata,
                 delimiter="\t"
                 ));
-            
+
             while(mydata[0][0][0]=='#'):
                 x=mydata.pop(0);        
-            if True:
-                mydata.pop(0);
+            headers=mydata.pop(0);
+            mydata.pop(0); #trash the line with the weird stuff
             m=len(mydata);
             wl=[0]*m;
             dates=[0]*m;
