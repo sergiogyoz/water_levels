@@ -11,10 +11,10 @@ from scipy import stats
 import statsmodels.graphics.tsaplots as smgt
 import statsmodels.tsa.arima_model as smta
 
-#WL=wal.TSReader.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
+WL=wal.TSReader.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
-USGS_TS=wal.TSReader.from_USGS("./dv",dateformat="%Y-/%m-/%d", units="ft");
+#USGS_TS=wal.TSReader.from_USGS("./dv",dateformat="%Y-/%m-/%d", units="ft");
 
 #yaver=wal.TSFilter.averages_from_TS(foryearplot, "monthly");
 #ypeaks=wal.TSFilter.POT_from_TS(WL, 604);
@@ -27,7 +27,16 @@ USGS_TS=wal.TSReader.from_USGS("./dv",dateformat="%Y-/%m-/%d", units="ft");
 #wplot.plotTS(ypeaks,gtype=1);
 
 #donttrashme=wplot.YearEvol.animate(foryearplot);
-#wplot.YearEvol.months(WL,1960,2020,[6,7,8]);
+Januaries=wal.TSFilter.month_from_years_from_TS(WL,1,range(1900,1930));
+averages=[];
+maxs=[];
+for year in Januaries:
+    averages.append( 
+        wal.TSFilter.averages_from_TS(Januaries[year], "monthly"));
+    averages.append(
+        wal.TSFilter.peaks_from_TS(Januaries[year], "monthly"));
+    
+#wplot.YearEvol.months(WL,1960,2020,[1,2,11,12]);
 
 #decade=wal.TSFilter.years_from_TS(WL, range(2000,2010+1));
 

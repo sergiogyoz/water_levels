@@ -15,7 +15,7 @@ class TS:
     #this are the currently supported frequencies
     _FREQUENCIES=["daily","weekly","30monthly","365yearly","monthly","yearly","custom",];
     
-    def __init__(self, waterlevels=None, datesarray=None, units="", frequency="daily", customdelta=0): #class constructor
+    def __init__(self, waterlevels=[], datesarray=[], units="", frequency="daily", customdelta=0): #class constructor
         """
         Time series object instance. Use this constructor for raw python data, 
         if reading from a file use any of the from_(filetype) functions in 
@@ -75,6 +75,7 @@ class TS:
             return f"[{self.first_date}:{self.wl[0]},..., {self.last_date}:{self.wl[-1]}]"; 
         except IndexError:
             return f"TS empty";
+
     def __str__(self): 
         try:
             self.wl[0];
@@ -86,7 +87,6 @@ class TS:
             return rstr; 
         except IndexError:
             return "  empty TS object  ";
-        
         
     def getwl(self,i): #use range to acess several indices from it
         if isinstance(i,int):
@@ -245,7 +245,15 @@ class TS:
         
 
         raise IndexError("The date can't be rounded in the dates array");
- 
+    
+    @staticmethod
+    def isEmpty(WL):
+        try:
+            WL.getwl(0);
+            return False;
+        except IndexError:
+            return True;
+    
     @staticmethod 
     def sub_TS(WL,fromdate,todate):
         """
@@ -374,6 +382,8 @@ class TSFilter:
         It returns a TS object with outfreq frequency (e.g. monthly) averages 
         from WL. The input can be any TS object
         """
+        if TS.isEmpty(WL):
+            return WL;
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
         sdate=aux._normalize_date(WL.first_date);
         edate=aux._normalize_date(WL.last_date);
@@ -398,6 +408,8 @@ class TSFilter:
         """
         It returns a TS object with outfreq (e.g. monthly) maximums or minimums from WL. The input can be any TS object.
         """        
+        if TS.isEmpty(WL):
+            return WL;
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
         sdate=aux._normalize_date(WL.first_date);
         edate=aux._normalize_date(WL.last_date);
@@ -426,6 +438,9 @@ class TSFilter:
         It returns a TS objects with the values that are larger than
         the threshold parameter. The input can be any TS object.
         """        
+        if TS.isEmpty(WL):
+            return WL;
+        
         rdates=[];
         rwls=[];
         

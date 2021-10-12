@@ -16,8 +16,15 @@ def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels"): #plo
     """
     
     WL=WL if WL else wal.TS();
+    if wal.TS.isEmpty(WL):
+        fig1,axs1=plt.subplots();
+        fig2,axs2=plt.subplots();
+        axs1.set_title("Empty series");
+        axs2.set_title("Empty series");
+        return fig1,axs1,fig2,axs2;
+
     if(fromdate==-1): fromdate=WL.first_date;
-    if(todate==-1): todate=WL.last_date;        
+    if(todate==-1): todate=WL.last_date;
     dates=[];
     wl=[];
     try:
