@@ -3,9 +3,9 @@ import watlevpy.time_series as wal #base class for time series
 from scipy import stats #for stats testing
 
 #--------------Kendall testing
-kdata=wal.TSReader.from_csvfile(csvfile="./KendalldataNotrend.csv",headers=True,dateformat="%m/%d/%Y %H:%M");    
-#kdata=wal.TSReader.from_csvfile(csvfile="./KendalldataTrend.csv",headers=True,dateformat="%m/%d/%Y %H:%M");    
-#kdata=wal.TSReader.from_csvfile(csvfile="./myyeardata.csv",headers=True,dateformat="%Y-%m-%d");    
+kdata=wal.TSReader.from_csvfile(csvfile="./data_files/KendalldataNotrend.csv",headers=True,dateformat="%m/%d/%Y %H:%M");    
+#kdata=wal.TSReader.from_csvfile(csvfile="./data_files/KendalldataTrend.csv",headers=True,dateformat="%m/%d/%Y %H:%M");    
+#kdata=wal.TSReader.from_csvfile(csvfile="./data_files/myyeardata.csv",headers=True,dateformat="%Y-%m-%d");    
 
 t=list(range(kdata.n));
 tau, kp_val= stats.kendalltau(t, kdata.wl);
