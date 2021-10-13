@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import watlevpy.time_series as wal #base class for time series
 #for plotting
 import watlevpy.plot.plot as wplot
@@ -16,6 +17,12 @@ WL=wal.TSReader.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
 #USGS_TS=wal.TSReader.from_USGS("./dv",dateformat="%Y-/%m-/%d", units="ft");
 
+somedata=wal.TS.sub_TS(WL, datetime.date(1950,1,1) , datetime.date(1970,1,1));
+wplot.plotTS(somedata);
+maximum=wal.TS.scalarFuction(somedata,stats.describe);
+logsomedata=wal.TS.applyFunction(somedata,math.log10);
+wplot.plotTS(logsomedata);
+
 #yaver=wal.TSFilter.averages_from_TS(foryearplot, "monthly");
 #ypeaks=wal.TSFilter.POT_from_TS(WL, 604);
 #wal.TS.save_to_csv(yaver,"myyeardata");
@@ -27,14 +34,15 @@ WL=wal.TSReader.from_csvfile(csvfile="./DubuqueIA.csv",headers=True,dateformat="
 #wplot.plotTS(ypeaks,gtype=1);
 
 #donttrashme=wplot.YearEvol.animate(foryearplot);
-Januaries=wal.TSFilter.month_from_years_from_TS(WL,1,range(1900,1930));
-averages=[];
-maxs=[];
-for year in Januaries:
-    averages.append( 
-        wal.TSFilter.averages_from_TS(Januaries[year], "monthly"));
-    averages.append(
-        wal.TSFilter.peaks_from_TS(Januaries[year], "monthly"));
+
+#Januaries=wal.TSFilter.month_from_years_from_TS(WL,1,range(1900,1930));
+#averages=[];
+#maxs=[];
+#for year in Januaries:
+#    averages.append( 
+#        wal.TSFilter.averages_from_TS(Januaries[year], "monthly"));
+#    averages.append(
+#        wal.TSFilter.peaks_from_TS(Januaries[year], "monthly"));
     
 #wplot.YearEvol.months(WL,1960,2020,[1,2,11,12]);
 

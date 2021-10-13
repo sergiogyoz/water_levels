@@ -276,7 +276,25 @@ class TS:
                 x=[] if valuesonly else [str(WL.dates[i])]; 
                 x.append(str(WL.wl[i]));
                 writer.writerow(x);
-
+                
+    @staticmethod
+    def scalarFuction(WL,func,fromdate=None,todate=None):
+        fromdate= fromdate if fromdate else WL.first_date;
+        todate= todate if todate else WL.last_date;      
+        
+        values=WL.get_time_window(fromdate,todate);
+        return func(values);
+    
+    @staticmethod
+    def applyFunction(WL,func,fromdate=None,todate=None):
+        fromdate= fromdate if fromdate else WL.first_date;
+        todate= todate if todate else WL.last_date;      
+        
+        values=WL.get_time_window(fromdate,todate);
+        values=[func(val) for val in values];
+        x=TS(values,WL.get_time_window_dates(fromdate,todate),WL.units,WL.frequency,WL._custom_delta);
+        return x;
+        
 class TSFilter:
     """
     Utility filtering class for further statistical analysis from TS objects. 
@@ -454,7 +472,6 @@ class TSFilter:
                 rwls.append(WL.wl[index]);
                 rdates.append(WL.dates[index]);
         return TS(rwls,rdates,WL.units,WL.frequency,WL._custom_delta);
-
 
     @staticmethod 
     def month_from_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
@@ -664,4 +681,3 @@ class TSReader:
             dates=dates[:n];
             wl=wl[:n];
             return TS(waterlevels=wl,datesarray=dates,units=units);
-
