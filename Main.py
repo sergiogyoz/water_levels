@@ -1,6 +1,8 @@
 import numpy as np
 import math
-import watlevpy.time_series as wal #base class for time series
+import os
+#base class for time series
+import watlevpy.time_series as wal 
 #for plotting
 import watlevpy.plot.plot as wplot
 import matplotlib.pyplot as plt
@@ -12,7 +14,6 @@ from scipy import stats
 import statsmodels.graphics.tsaplots as smgt
 import statsmodels.tsa.arima_model as smta
 
-datapath="./data_files/";
 
 WL=wal.TSReader.from_csvfile(csvfile="./data_files/DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
@@ -37,7 +38,7 @@ wplot.plotTS(logsomedata);
 
 #donttrashme=wplot.YearEvol.animate(foryearplot);
 
-Januaries=wal.TSFilter.month_of_years_from_TS(WL,1,range(1900,1930));
+#Januaries=wal.TSFilter.month_of_years_from_TS(WL,1,range(1900,1930));
 #averages=[];
 #maxs=[];
 #for year in Januaries:
@@ -48,6 +49,15 @@ Januaries=wal.TSFilter.month_of_years_from_TS(WL,1,range(1900,1930));
     
 #wplot.YearEvol.months(WL,1960,2020,[1,2,11,12]);
 
+#
+
+#datapath="./data_files/Mississippi_River/";
+#x=[];
+#for file_ in os.listdir(datapath):
+#    if file_.endswith(".csv"):
+#        x.append(
+#            wal.TSReader.from_csvfile(csvfile=datapath+file_,headers=True,dateformat="%m/%d/%Y %H:%M"));
+#        print(file_);
 
 """
 
