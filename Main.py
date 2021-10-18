@@ -15,7 +15,7 @@ import statsmodels.tsa.arima_model as smta
 WL=wal.TSReader.from_csvfile(csvfile="./data_files/DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
-#USGS_TS=wal.TSReader.from_USGS("./dv",dateformat="%Y-/%m-/%d", units="ft");
+#USGS_TS=wal.TSReader.from_USGS("./data_files/dv",dateformat="%Y-/%m-/%d", units="ft");
 
 somedata=wal.TS.sub_TS(WL, datetime.date(1950,1,1) , datetime.date(1970,1,1));
 wplot.plotTS(somedata);
@@ -45,12 +45,6 @@ wplot.plotTS(logsomedata);
 #        wal.TSFilter.peaks_from_TS(Januaries[year], "monthly"));
     
 #wplot.YearEvol.months(WL,1960,2020,[1,2,11,12]);
-
-#decade=wal.TSFilter.years_from_TS(WL, range(2000,2010+1));
-
-#Februaries=wal.TSFilter.month_from_years_from_TS(WL, month=2);
-
-#wplot.plotTS(decade);
 
 
 """

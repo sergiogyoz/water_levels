@@ -40,7 +40,7 @@ class TS:
             self.first_date=datesarray[0];
             self.last_date=datesarray[-1];
         except IndexError:
-            print("empty TS object")
+            pass; #empty TS object
         n=len(waterlevels);
         m=len(datesarray);
         if n!=m :
@@ -101,12 +101,16 @@ class TS:
             return self.date_index[date];
         return [self.date_index[d] for d in date];
     
-    def get_time_window(self,fromdate,todate): #returns the existing time series values from fromdate to todate
+    def get_time_window(self,fromdate=None,todate=None): #returns the existing time series values from fromdate to todate
         """
         Returns the time series values from fromdate to todate (it does not keep track of the dates, 
         use for extracting values only). If rounding down or up is impossible inside the data it returns
         an empty array. If rounding is possible but the range contains no values it returns an empty array.
         """
+        if not self.wl:
+            return [];
+        fromdate=fromdate if fromdate else self.first_date;
+        todate=todate if todate else self.last_date;
         
         try:
             s=TS.round_date(self, fromdate,roundup=True);
@@ -168,14 +172,17 @@ class TS:
         newdate= datetime.date.fromordinal(dateordinal-(dateordinal-firstday)%delta);
         return newdate;
 
-    def get_time_window_dates(self,fromdate,todate):
+    def get_time_window_dates(self,fromdate=None,todate=None):
         """
         returns the existing dates from fromdate to todate on the object.
         If rounding down or up is impossible inside the data it returns and
         empty array. If rounding is possible but the range contains no values
         it returns an empty array.
         """
-        
+        if not self.wl:
+            return [];
+        fromdate=fromdate if fromdate else self.first_date;
+        todate=todate if todate else self.last_date;
         try:
             s=TS.round_date(self, fromdate,roundup=True);
             s=self.getindex(s);
@@ -277,6 +284,16 @@ class TS:
                 x.append(str(WL.wl[i]));
                 writer.writerow(x);
                 
+    @staticmethod
+    def _check_freq(frequency,raiseError=True):
+        if frequency in TS._FREQUENCIES:
+            return True;
+        else:
+            if raiseError:
+                raise TypeError(f"frequency value '{frequency}' is not supported (possibly a typo)");
+            print(f"frequency value '{frequency}' is not supported (possibly a typo)");
+            return False;
+    
     @staticmethod
     def scalarFuction(WL,func,fromdate=None,todate=None):
         fromdate= fromdate if fromdate else WL.first_date;
@@ -400,6 +417,7 @@ class TSFilter:
         It returns a TS object with outfreq frequency (e.g. monthly) averages 
         from WL. The input can be any TS object
         """
+        TS._check_freq(outfreq);
         if TS.isEmpty(WL):
             return WL;
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
@@ -425,7 +443,8 @@ class TSFilter:
     def peaks_from_TS(WL, outfreq, customdelta=0, maximum=True): #returns max peaks every outfreq (e.g. monthly)
         """
         It returns a TS object with outfreq (e.g. monthly) maximums or minimums from WL. The input can be any TS object.
-        """        
+        """    
+        TS._check_freq(outfreq);
         if TS.isEmpty(WL):
             return WL;
         aux=TS([-1,-1],[WL.first_date, WL.last_date],units="",frequency=outfreq, customdelta=customdelta);
