@@ -170,7 +170,7 @@ class YearEvol:
         
         monthaverages=[];
         for month in months:
-            month_averagesTSdict=wal.TSFilter.month_from_years_from_TS(
+            month_averagesTSdict=wal.TSFilter.month_of_years_from_TS(
                 averages,month,years,miss_days_tol=99,consecutive_days_missed=99);
             this_month_averages=[];
             for year in month_averagesTSdict:

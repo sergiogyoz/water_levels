@@ -493,7 +493,7 @@ class TSFilter:
         return TS(rwls,rdates,WL.units,WL.frequency,WL._custom_delta);
 
     @staticmethod 
-    def month_from_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
+    def month_of_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
         """
         Returns a dictionary with keys being the year and values being the 
         TS object(s) from a month in a (the) given year(s), e.g.

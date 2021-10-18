@@ -12,6 +12,8 @@ from scipy import stats
 import statsmodels.graphics.tsaplots as smgt
 import statsmodels.tsa.arima_model as smta
 
+datapath="./data_files/";
+
 WL=wal.TSReader.from_csvfile(csvfile="./data_files/DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(WL.first_date.year+1,1,1), datetime.date(WL.last_date.year-1,12,31));
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
@@ -35,7 +37,7 @@ wplot.plotTS(logsomedata);
 
 #donttrashme=wplot.YearEvol.animate(foryearplot);
 
-#Januaries=wal.TSFilter.month_from_years_from_TS(WL,1,range(1900,1930));
+Januaries=wal.TSFilter.month_of_years_from_TS(WL,1,range(1900,1930));
 #averages=[];
 #maxs=[];
 #for year in Januaries:
