@@ -1,0 +1,10 @@
+Github: 
+Synchronized repository (folder) to share a (usually) coding project
+	-Desktop app is an interface to pull and push, and see changes
+	-
+
+Anaconda:
+Package of "scientific software" that also manages python enviroments
+	-Basically you install it to have multiple common python libraries
+	-it comes with software to code in (many languages) python
+ 
