@@ -322,27 +322,38 @@ class TSFilter:
     
     #--------BASE FUNCTIONS FOR THE CHECKS, CAREFUL WHEN EDITING THESE
     @staticmethod    
-    def num_missing_dates(WL,fromdate,todate): #returns the number of missing DAYS in WL from fromdate to todate
+    def num_missing_dates(WL,fromdate,todate): #returns the number of missing dates in WL from fromdate to todate
         """
-        returns the number of missing days DAYS DAYS (only works for daily data)
+        returns the number of missing dates (it takes into account the frequency information)
         """
-        try:
-            s=WL.getindex(fromdate);
-        except KeyError:
-            try:
+        if WL.frequency=="daily":            
+            try: 
                 s=TS.round_date(WL, fromdate,roundup=True);
                 s=WL.getindex(s);
-            except KeyError:
+            except KeyError: #impossible to round means it's missing all dates
                 return (todate-fromdate).days+1;
-        try:
-            e=WL.getindex(todate);
-        except KeyError:
+
             try:
                 e=TS.round_date(WL, todate);
                 e=WL.getindex(e);
-            except KeyError:
+            except KeyError: #same here
                 return (todate-fromdate).days+1;
-        return (todate-fromdate).days-(e-s);
+
+            return (todate-fromdate).days-(e-s);
+        else:
+            total=0; #total dates that should fit in WL
+            actual=0;#actual dates in WL
+            idate=WL.first_date;
+            while idate<=WL.last_date:
+                total=total+1;
+                missing=False;
+                try:
+                    TS.getindex(idate);
+                except KeyError:
+                    missing=True;
+                actual=actual+(not missing);
+                idate=idate+WL.delta(idate);
+            return total-actual;
         
     @staticmethod
     def missing_dates(WL,fromdate,todate): #returns missing DAYS in WL from fromdate to todate
@@ -406,7 +417,10 @@ class TSFilter:
         return False;
     
     @staticmethod 
-    def missing_periods(): #missing function for different periods
+    def _missing_periods(WL,fromdate,todate): #missing date function for different frequencies
+        """
+        Assumes fromdate and todate a
+        """
         pass;
     
     #-----------------HERE THEY END
@@ -585,6 +599,9 @@ class TSFilter:
                 return False;
         return True;
     
+    @staticmethod
+    def longest_continuous_streak(WL):
+        pass;
 
 class TSReader:
     
