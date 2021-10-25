@@ -360,39 +360,66 @@ class TSFilter:
         """
         Returns an array of pairs (firstdaymiss,lastdatemiss) where the run from 
         firstdaymiss to lastdaymiss are missing days.
-        """
-        
-        md=[]
-        try:
-            s=WL.getindex(fromdate);
-        except KeyError:
+        """        
+        if WL.frequency=="daily":
+            md=[]
             try:
                 s=TS.round_date(WL, fromdate,roundup=True);
-                md.append((fromdate,s-datetime.timedelta(days=1)));
+                if s!=fromdate:
+                    md.append((fromdate,s-WL.delta(s,forward=False)));
                 s=WL.getindex(s);
             except KeyError:
-                md=[(fromdate,todate)];
-                return md;
-        missinglast=False;
-        try:
-            e=WL.getindex(todate);
-        except KeyError:
+                return [(fromdate,todate)];
+            missinglast=False;
             try:
                 e=TS.round_date(WL, todate);
+                if e!=todate:
+                    missinglast=True;
                 e=WL.getindex(e);
-                missinglast=True;
             except KeyError:
-                md=[(fromdate,todate)];
-                return md;
-        for i in range(s+1,e+1):
-            x=WL.getdate(i);
-            y=WL.getdate(i-1);
-            if((x-y).days>1):
-                oneday=datetime.timedelta(days=1);
-                md.append((y+oneday,x-oneday));
-        if missinglast:
-            md.append((WL.getdate(e)+datetime.timedelta(days=1),todate));
-        return md;
+                return [(fromdate,todate)];
+            
+            for i in range(s+1,e+1):
+                x=WL.getdate(i);
+                y=WL.getdate(i-1);
+                if((x-y).days>1):
+                    oneday=datetime.timedelta(days=1);
+                    md.append((y+oneday,x-oneday));
+            if missinglast:
+                md.append((WL.getdate(e)+WL.delta(e),todate));
+            return md;
+        else:
+            md=[]
+            fd=WL._normalize_date(fromdate);
+            td=WL._normalize_date(todate);
+            try:
+                s=TS.round_date(WL, fd,roundup=True);
+                if s!=fd:
+                    md.append((fd,s-WL.delta(s,forward=False)));
+                s=WL.getindex(s);
+            except KeyError:
+                return [(fd,td)];
+            missinglast=False;
+            try:
+                e=TS.round_date(WL, td);
+                if e!=td:
+                    missinglast=True;
+                e=WL.getindex(e);
+            except KeyError:
+                return [(fd,td)];
+            
+            for i in range(s+1,e+1):
+                x=WL.getdate(i);
+                y=WL.getdate(i-1);
+                if((x-y).days> WL.delta(y).days):
+                    fdelta=WL.delta(y);
+                    bdelta=WL.delta(x);
+                    md.append((y+fdelta,x-bdelta));
+            if missinglast:
+                ld=WL.getdate(e);
+                fdelta=WL.delta(ld);
+                md.append((ld+WL.delta(ld),td));
+            return md;
 
     @staticmethod            
     def is_missing_dates(WL,fromdate,todate, num_missing_dates=0): #returns true if WL is missing more than num_missing_dates

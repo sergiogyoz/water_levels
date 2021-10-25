@@ -20,11 +20,11 @@ WL=wal.TSReader.from_csvfile(csvfile="./data_files/DubuqueIA.csv",headers=True,d
 #foryearplot=wal.TS.sub_TS(WL, datetime.date(1950,1,1), datetime.date(WL.last_date.year-1,12,31));
 #USGS_TS=wal.TSReader.from_USGS("./data_files/dv",dateformat="%Y-/%m-/%d", units="ft");
 
-somedata=wal.TS.sub_TS(WL, datetime.date(1950,1,1) , datetime.date(1970,1,1));
-wplot.plotTS(somedata);
-maximum=wal.TS.scalarFuction(somedata,stats.describe);
-logsomedata=wal.TS.applyFunction(somedata,math.log10);
-wplot.plotTS(logsomedata);
+#somedata=wal.TS.sub_TS(WL, datetime.date(1950,1,1) , datetime.date(1970,1,1));
+#wplot.plotTS(somedata);
+#maximum=wal.TS.scalarFuction(somedata,stats.describe);
+#logsomedata=wal.TS.applyFunction(somedata,math.log10);
+#wplot.plotTS(logsomedata);
 
 #yaver=wal.TSFilter.averages_from_TS(foryearplot, "monthly");
 #ypeaks=wal.TSFilter.POT_from_TS(WL, 604);
@@ -32,6 +32,12 @@ wplot.plotTS(logsomedata);
 
 #fig1,axs1,fig2,axs2 =wplot.plotTS(yaver,gtype=2,dataname="water levels");
 
+#firstyear=wal.TS.sub_TS(WL, WL.first_date, datetime.date(WL.first_date.year,12,31));
+#month_aver=wal.TSFilter.averages_from_TS(firstyear, "yearly");
+#wplot.plotTS(month_aver);
+#d1=datetime.date(1878,1,1);
+#d2=datetime.date(1879,12,31);
+#missss=wal.TSFilter.missing_dates(month_aver, d1, d2);
 
 #ypeaks=wal.TSFilter.peaks_from_TS(WL, "monthly");
 #wplot.plotTS(ypeaks,gtype=1);

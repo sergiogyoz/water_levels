@@ -9,7 +9,7 @@ import datetime
 #graphics ffmpeg path for animations
 plt.rcParams['animation.ffmpeg_path']="./watlevpy/plot/ffmpeg-2021-07-04-essentials_build/bin/ffmpeg.exe";
 
-def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels"): #plots WL from fromdate to todate
+def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels",custom_interval=1): #plots WL from fromdate to todate
     """
     Line plot of water levels time series and histogram from fromdate to todate. If no from or last date provided it
     will use the first and last date from WL. gtype from 1 to 5 to see different styles
@@ -67,6 +67,12 @@ def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels"): #plo
         locator=mdates.MonthLocator(interval=2);
     else:
         locator=mdates.AutoDateLocator(maxticks=6);
+        
+    if WL.frequency=="monthly":
+        locator=mdates.MonthLocator(interval=custom_interval);
+    if WL.frequency=="yearly":
+        locator=mdates.YearLocator();
+    
     
     axs1.xaxis.set_major_locator(locator);
     axs1.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));
