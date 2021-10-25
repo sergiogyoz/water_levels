@@ -32,12 +32,12 @@ WL=wal.TSReader.from_csvfile(csvfile="./data_files/DubuqueIA.csv",headers=True,d
 
 #fig1,axs1,fig2,axs2 =wplot.plotTS(yaver,gtype=2,dataname="water levels");
 
-#firstyear=wal.TS.sub_TS(WL, WL.first_date, datetime.date(WL.first_date.year,12,31));
-#month_aver=wal.TSFilter.averages_from_TS(firstyear, "yearly");
-#wplot.plotTS(month_aver);
-#d1=datetime.date(1878,1,1);
-#d2=datetime.date(1879,12,31);
-#missss=wal.TSFilter.missing_dates(month_aver, d1, d2);
+firstyear=wal.TS.sub_TS(WL, WL.first_date, datetime.date(WL.first_date.year,12,31));
+month_aver=wal.TSFilter.averages_from_TS(firstyear, "monthly");
+wplot.plotTS(month_aver);
+d1=datetime.date(1878,1,1);
+d2=datetime.date(1879,12,31);
+missss=wal.TSFilter.num_missing_dates(month_aver, d1, d2);
 
 #ypeaks=wal.TSFilter.peaks_from_TS(WL, "monthly");
 #wplot.plotTS(ypeaks,gtype=1);

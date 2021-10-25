@@ -341,19 +341,16 @@ class TSFilter:
 
             return (todate-fromdate).days-(e-s);
         else:
-            total=0; #total dates that should fit in WL
-            actual=0;#actual dates in WL
-            idate=WL.first_date;
-            while idate<=WL.last_date:
-                total=total+1;
-                missing=False;
-                try:
-                    TS.getindex(idate);
-                except KeyError:
-                    missing=True;
-                actual=actual+(not missing);
-                idate=idate+WL.delta(idate);
-            return total-actual;
+            total=0; #total missing dates
+            md=TSFilter.missing_dates(WL, fromdate, todate);
+            for pair in md:
+                s=pair[0];
+                e=pair[1];
+                idate=s;
+                while idate<=e:
+                    idate=idate+WL.delta(idate);
+                    total=total+1;
+            return total;
         
     @staticmethod
     def missing_dates(WL,fromdate,todate): #returns missing DAYS in WL from fromdate to todate
