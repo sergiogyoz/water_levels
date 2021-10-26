@@ -584,18 +584,18 @@ def missing_days_check():
         something_broke("number of days missing in a row having issues");
 
 def checks_check():
-    if not wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10), miss_days_tol=10, consecutive_days_missed=10 ) \
-    or wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10), miss_days_tol=9, consecutive_days_missed=9 ):
+    if not wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10), miss_tol=10, consecutive_missed=10 ) \
+    or wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 10), miss_tol=9, consecutive_missed=9 ):
         something_broke("check time window function on limits of data is having issues");
-    if not wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 28),miss_days_tol=30,consecutive_days_missed=30):
+    if not wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 1), datetime.date(1891, 2, 28),miss_tol=30,consecutive_missed=30):
         something_broke("check with ample missdays and consecdays tolerance is not passing");
-    if wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=5,consecutive_days_missed=5):
+    if wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_tol=5,consecutive_missed=5):
         something_broke("check with exact number of missing dates is not failing");
-    if wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=6,consecutive_days_missed=2):
+    if wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_tol=6,consecutive_missed=2):
         something_broke("check with exact number of missing consecutive dates is not failing");
-    if wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=5,consecutive_days_missed=2):
+    if wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_tol=5,consecutive_missed=2):
         something_broke("check with exact number of both missing and consecutive dates is not failing");
-    if not wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_days_tol=6,consecutive_days_missed=3):
+    if not wal.TSFilter.check_time_window(data, datetime.date(1891, 2, 23), datetime.date(1891, 3, 3),miss_tol=6,consecutive_missed=3):
         something_broke("check with exact number of both missing and consecutive dates is not passing");
 
 def all_checks():

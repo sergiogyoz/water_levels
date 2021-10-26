@@ -10,7 +10,6 @@ class TS:
     TS is the base class for daily, monthly, yearly, and other period measurements. 
     It is a placeholder for the data, which is used in the for plotting, application 
     of statistical analisys, reading of files and more!
-    
     """
     #this are the currently supported frequencies
     _FREQUENCIES=["daily","weekly","30monthly","365yearly","monthly","yearly","custom",];
@@ -283,9 +282,13 @@ class TS:
                 x=[] if valuesonly else [str(WL.dates[i])]; 
                 x.append(str(WL.wl[i]));
                 writer.writerow(x);
+
+    @staticmethod
+    def to_df(): #returns the TS as a pandas DataFrame
+        pass;
                 
     @staticmethod
-    def _check_freq(frequency,raiseError=True):
+    def _check_freq(frequency,raiseError=True): #used to check frequency is one of the _FREQUENCIES
         if frequency in TS._FREQUENCIES:
             return True;
         else:
@@ -312,6 +315,7 @@ class TS:
         x=TS(values,WL.get_time_window_dates(fromdate,todate),WL.units,WL.frequency,WL._custom_delta);
         return x;
         
+
 class TSFilter:
     """
     Utility filtering class for further statistical analysis from TS objects. 
@@ -428,17 +432,28 @@ class TSFilter:
         return False;
 
     @staticmethod 
-    def is_missing_in_a_row(WL,fromdate,todate,max_consecutive_days): #returns true if it's missing more than max_consecutive_days consecutive days in a row
+    def is_missing_in_a_row(WL,fromdate,todate,max_consecutive): #returns true if it's missing more than max_consecutive consecutive periods in a row
         """
-        returns true if there are more than max_consecutive_days consecutive days missing from fromdate to todate
+        returns true if there are more than max_consecutive consecutive days missing from fromdate to todate
         """
-        
-        md=TSFilter.missing_dates(WL,fromdate,todate);
-        for i in range(len(md)):
-            if (md[i][1]-md[i][0]).days+1>max_consecutive_days:
-                print(f"last consecutive day check at {md[i][1]}")
-                return True;
-        return False;
+        if WL.frequency=="daily":
+            md=TSFilter.missing_dates(WL,fromdate,todate);
+            for i in range(len(md)):
+                if (md[i][1]-md[i][0]).days+1>max_consecutive:
+                    print(f"last consecutive day check at {md[i][0]}")
+                    return True;
+            return False;
+        else:
+            md=TSFilter.missing_dates(WL,fromdate,todate);
+            for i in range(len(md)):
+                num_missing_periods=1;
+                ind=md[i][0];
+                while(ind<md[i][1]):
+                    ind=ind+WL.delta(ind);
+                    num_missing_periods=num_missing_periods+1;
+                if max_consecutive<num_missing_periods:
+                    return True;
+            return False;
     
     @staticmethod 
     def _missing_periods(WL,fromdate,todate): #missing date function for different frequencies
@@ -531,7 +546,7 @@ class TSFilter:
         return TS(rwls,rdates,WL.units,WL.frequency,WL._custom_delta);
 
     @staticmethod 
-    def month_of_years_from_TS(WL,month,years=None,miss_days_tol=27,consecutive_days_missed=31):
+    def month_of_years_from_TS(WL,month,years=None,miss_tol=27,consecutive_missed=31):
         """
         Returns a dictionary with keys being the year and values being the 
         TS object(s) from a month in a (the) given year(s), e.g.
@@ -548,7 +563,7 @@ class TSFilter:
         for year in years:
             firstdaymonth=datetime.date(year, month, 1);
             lastdaymonth=datetime.date(year, month, 1)+aux.delta(firstdaymonth)-datetime.timedelta(days=1); #not the actual last day of the month
-            if TSFilter.check_time_window(WL, firstdaymonth, lastdaymonth,miss_days_tol,consecutive_days_missed):
+            if TSFilter.check_time_window(WL, firstdaymonth, lastdaymonth,miss_tol,consecutive_missed):
                 values=WL.get_time_window(firstdaymonth,lastdaymonth);
                 dates=WL.get_time_window_dates(firstdaymonth,lastdaymonth);
                 mTS=TS(values,dates,WL.units,WL.frequency,WL._custom_delta);
@@ -562,11 +577,12 @@ class TSFilter:
         rmts=dict(zip(ys,m));
         return rmts;
 
-    def years_from_TS(WL,years,checkid=0,miss_day_tol=365,consecutive_days_missed=365):
+    @staticmethod 
+    def years_from_TS(WL,years,checkid=0,miss_day_tol=365,consecutive_missed=365):
         """
         returns a TS object with the data from the given years. If data doesn't pass the 
         test or no data exist it skips that year. checkid=1 uses the miss_day_tol, 
-        checkid=2 uses the consecutive_days_missed
+        checkid=2 uses the consecutive_missed
         """
         #if I want this to work more generally I should make the missing_periods function        
         ts=[];
@@ -574,45 +590,44 @@ class TSFilter:
         for year in years:
             goodyear=True;
             if checkid==1:
-                goodyear=TSFilter.check_year(WL, year, miss_day_tol, consecutive_days_missed);
+                goodyear=TSFilter.check_year(WL, year, miss_day_tol, consecutive_missed);
             if checkid==2:
                 goodyear=TSFilter.check_year_by_month(WL,year,miss_day_tol);
             if goodyear:
                 ts.extend( WL.get_time_window(datetime.date(year,1,1), datetime.date(year,12,31)) );
                 ds.extend(WL.get_time_window_dates(datetime.date(year,1,1), datetime.date(year,12,31)));
             else:
-                pass; #skipping bad years
-        
+                pass; #skipping bad years        
         rts=TS(ts,ds,WL.units);
         return rts;
 
     @staticmethod 
-    def check_time_window(WL,fromdate,todate,miss_days_tol=0,consecutive_days_missed=0): #check from fromdate to todate
+    def check_time_window(WL,fromdate,todate,miss_tol=0,consecutive_missed=0): #check from fromdate to todate
         """
         returns false if the number of missing days is more than miss_day_tol. it also returns false if there are more
-        than consecutive_days_missed consecutive days missing. otherwise it returns true
+        than consecutive_missed consecutive days missing. otherwise it returns true
         
         general function to check if there are missing days and missing consecutive days in a window
         """
         
-        passed=not (TSFilter.is_missing_dates(WL, fromdate, todate, num_missing_dates=miss_days_tol) or
-                TSFilter.is_missing_in_a_row(WL, fromdate, todate, max_consecutive_days=consecutive_days_missed))
+        passed=not (TSFilter.is_missing_dates(WL, fromdate, todate, num_missing_dates=miss_tol) or
+                TSFilter.is_missing_in_a_row(WL, fromdate, todate, max_consecutive=consecutive_missed))
         return passed;
         
     @staticmethod 
-    def check_week(WL,fromdate,miss_days_tol=0,consecutive_days_missed=7): #check a 7 day period 
-        return TSFilter.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=7) ,miss_days_tol,consecutive_days_missed);
+    def check_week(WL,fromdate,miss_tol=0,consecutive_missed=7): #check a 7 day period 
+        return TSFilter.check_time_window(WL, fromdate, fromdate+datetime.deltatimedelta(days=7) ,miss_tol,consecutive_missed);
 
     @staticmethod 
-    def check_month(WL,year,month,miss_days_tol=0,consecutive_days_missed=30): #check a 30 day period 
+    def check_month(WL,year,month,miss_tol=0,consecutive_missed=30): #check a 30 day period 
         firstdayofmonth=datetime.date(year,1 , 1)+datetime.timedelta(days=(month-1)*30);
         lastdayofmonth=firstdayofmonth+datetime.timedelta(days=29);
-        return TSFilter.check_time_window(WL, firstdayofmonth, lastdayofmonth, miss_days_tol, consecutive_days_missed);
+        return TSFilter.check_time_window(WL, firstdayofmonth, lastdayofmonth, miss_tol, consecutive_missed);
 
     @staticmethod 
-    def check_year(WL,year, miss_days_tol=0,consecutive_days_missed=365): #check a 365 day period
+    def check_year(WL,year, miss_tol=0,consecutive_missed=365): #check a 365 day period
         dindex=datetime.date(year, 1, 1);        
-        return TSFilter.check_time_window(WL, dindex, dindex+datetime.timedelta(days=365),miss_days_tol,consecutive_days_missed);
+        return TSFilter.check_time_window(WL, dindex, dindex+datetime.timedelta(days=365),miss_tol,consecutive_missed);
 
     @staticmethod 
     def check_year_by_month(WL,year,miss_days_month=0): #check a 360 year making sure there're no big holes along
