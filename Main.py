@@ -38,6 +38,7 @@ wplot.plotTS(month_aver);
 d1=datetime.date(1878,1,1);
 d2=datetime.date(1879,12,31);
 missss=wal.TSFilter.num_missing_dates(month_aver, d1, d2);
+rowdie=wal.TSFilter.is_missing_in_a_row(month_aver, d1, d2, 7);
 
 #ypeaks=wal.TSFilter.peaks_from_TS(WL, "monthly");
 #wplot.plotTS(ypeaks,gtype=1);
