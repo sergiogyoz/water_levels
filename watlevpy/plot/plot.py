@@ -66,13 +66,7 @@ def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels",custom
     elif ndays<370:
         locator=mdates.MonthLocator(interval=2);
     else:
-        locator=mdates.AutoDateLocator(maxticks=6);
-        
-    if WL.frequency=="monthly":
-        locator=mdates.MonthLocator(interval=custom_interval);
-    if WL.frequency=="yearly":
-        locator=mdates.YearLocator();
-    
+        locator=mdates.AutoDateLocator(maxticks=6);    
     
     axs1.xaxis.set_major_locator(locator);
     axs1.xaxis.set_major_formatter(mdates.AutoDateFormatter(locator));

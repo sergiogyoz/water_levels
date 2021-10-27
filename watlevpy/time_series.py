@@ -634,23 +634,36 @@ class TSFilter:
         return True;
     
     @staticmethod
-    def longest_continuous_run(WL): #returns the longest continuous run of data in WL
+    def longest_continuous_run(WL,runs=False): #returns the longest continuous run of data in WL
         if WL.frequency=="daily":
             md=TSFilter.missing_dates(WL,WL.first_date,WL.last_date);
             if not md:
                 return (WL.first_date,WL.last_date);
+            leftdate=WL.first_date;
             oneday=datetime.timedelta(days=1);
-            if md:
-                cruns=[(WL.first_date,md[0][0])];
-            for i in range(len(md)-1):
-                cruns.append((md[i][1]+oneday, md[i+1][0]-oneday ));
-            if md:
-                cruns.append((WL.first_date,md[-1][1]+oneday,WL.last_date));
-            crunslen=[(cruns[i][1]-cruns[i][0]).days+1 for i in range(len(md))];
+            cruns=[];
+            for pair in md:
+                cruns.append((leftdate,pair[0]-oneday));
+                leftdate=pair[1]+oneday;
+            cruns.append( (leftdate ,WL.last_date ) );
+            crunslen=[(cruns[i][1]-cruns[i][0]).days+1 for i in range(len(cruns))];
             longest=np.argmax(crunslen);
             return cruns[longest];
-        
-        
+        else:
+            md=TSFilter.missing_dates(WL,WL.first_date,WL.last_date);
+            if not md:
+                return (WL.first_date,WL.last_date);
+            cruns=[];
+            leftdate=WL.first_date;
+            for pair in md:
+                cruns.append((leftdate,pair[0]-WL.delta(pair[0],False)));
+                leftdate=pair[1]+WL.delta(pair[1]);
+            cruns.append( (leftdate ,WL.last_date ) );
+            crunslen=[(cruns[i][1]-cruns[i][0]).days+1 for i in range(len(cruns))];
+            longest=np.argmax(crunslen);
+            if runs:
+                return cruns[longest],cruns;
+            return cruns[longest];
         
 class TSReader:
     
