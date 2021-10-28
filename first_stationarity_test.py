@@ -17,9 +17,19 @@ import statsmodels.tsa.stattools as smttools
 
 
 datapath="./data_files/Mississippi_River/";
+#c's are critical values, p's are p-values
+Ts1=[];
+c1=[];
 p1=[];
+Ts2=[];
+c2=[];
 p2=[];
+Ts3=[];
+c3=[];
 p3=[];
+Ts4=[];
+c4=[];
+p4=[];
 filenames=[];
 N=[];
 for file_ in os.listdir(datapath):
@@ -42,9 +52,19 @@ for file_ in os.listdir(datapath):
         final=yaver.get_time_window(lrun[0],lrun[1]);
         N.append(len(final));
         #augmented Dickie Fuller test
-        adf=smttools.adfuller(final);
+        adf=smttools.adfuller(final,regression="c");
+        Ts1.append(adf[0]);
+        c1.append(adf[4]);
         p1.append(adf[1]);
+        adf=smttools.adfuller(final,regression="ct");
+        Ts2.append(adf[0]);
+        c2.append(adf[4]);
+        p2.append(adf[1]);
         kpss=smttools.kpss(final,regression="c", nlags="auto");
-        p2.append(kpss[1]);
-        kpsst=smttools.kpss(final,regression="ct", nlags="auto");
-        p3.append(kpsst[1]);
+        Ts3.append(kpss[0]);
+        c3.append(kpss[3]);
+        p3.append(kpss[1]);
+        kpss=smttools.kpss(final,regression="ct", nlags="auto");
+        Ts4.append(kpss[0]);
+        c4.append(kpss[3]);
+        p4.append(kpss[1]);
