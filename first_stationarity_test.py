@@ -13,30 +13,38 @@ from scipy import stats
 #for ARIMA and autocorrelations
 import statsmodels.graphics.tsaplots as smgt
 import statsmodels.tsa.arima_model as smta
+import statsmodels.tsa.stattools as smttools
 
-#reading csv file
-WL=wal.TSReader.from_csvfile(
-    csvfile="./data_files/DubuqueIA.csv",headers=True,dateformat="%m/%d/%Y %H:%M");
-#wplot.plotTS(WL);
 
-#going crazy about a function
-smallWL=wal.TS.sub_TS(WL, datetime.date(1931,1,1), datetime.date(1935,12,21));
-"""y=wal.TSFilter.years_from_TS(
-    smallWL,
-    years=range(smallWL.first_date.year,smallWL.last_date.year+1),
-    checkid=2,
-    miss_day_tol=1);
-ylonrun=wal.TSFilter.longest_continuous_run(y);
-"""
-#years with at least 20 days every month
-
-x=wal.TSFilter.years_from_TS(
-    WL,
-    years=range(WL.first_date.year,WL.last_date.year+1),
-    checkid=2,
-    miss_day_tol=20);
-
-xaver=wal.TSFilter.averages_from_TS(x, "yearly");
-wplot.plotTS(xaver);
-
-longest_run,cruns=wal.TSFilter.longest_continuous_run(xaver,True);
+datapath="./data_files/Mississippi_River/";
+p1=[];
+p2=[];
+p3=[];
+filenames=[];
+N=[];
+for file_ in os.listdir(datapath):
+    if file_.endswith(".csv"):
+        #reading csv file
+        WL=wal.TSReader.from_csvfile(
+            csvfile=datapath+file_,headers=True,dateformat="%m/%d/%Y %H:%M");
+        filenames.append(file_);
+        #years with at least a few days every month
+        goodyears=wal.TSFilter.years_from_TS(
+            WL,
+            years=range(WL.first_date.year,WL.last_date.year+1),
+            checkid=2,
+            miss_day_tol=25);
+        #averages of those years
+        yaver=wal.TSFilter.averages_from_TS(goodyears, "yearly");
+        #wplot.plotTS(yaver,gtype=2);
+        #extract longest continuous run
+        lrun,cruns=wal.TSFilter.longest_continuous_run(yaver,True);
+        final=yaver.get_time_window(lrun[0],lrun[1]);
+        N.append(len(final));
+        #augmented Dickie Fuller test
+        adf=smttools.adfuller(final);
+        p1.append(adf[1]);
+        kpss=smttools.kpss(final,regression="c", nlags="auto");
+        p2.append(kpss[1]);
+        kpsst=smttools.kpss(final,regression="ct", nlags="auto");
+        p3.append(kpsst[1]);

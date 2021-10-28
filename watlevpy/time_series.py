@@ -100,27 +100,6 @@ class TS:
             return self.date_index[date];
         return [self.date_index[d] for d in date];
     
-    def get_time_window(self,fromdate=None,todate=None): #returns the existing time series values from fromdate to todate
-        """
-        Returns the time series values from fromdate to todate (it does not keep track of the dates, 
-        use for extracting values only). If rounding down or up is impossible inside the data it returns
-        an empty array. If rounding is possible but the range contains no values it returns an empty array.
-        """
-        if not self.wl:
-            return [];
-        fromdate=fromdate if fromdate else self.first_date;
-        todate=todate if todate else self.last_date;
-        
-        try:
-            s=TS.round_date(self, fromdate,roundup=True);
-            s=self.getindex(s);
-            e=TS.round_date(self, todate);
-            e=self.getindex(e);        
-        except KeyError:
-            print(f"range {fromdate} to {todate} is outside of bounds");
-            return [];
-        return [self.wl[i] for i in range(s,e+1)];
-    
     def delta(self,currentdate=None,forward=True):
         """
         time delta based on the frequency of the time series. If needed e.g., monthly delta changes each month,
@@ -171,6 +150,27 @@ class TS:
         newdate= datetime.date.fromordinal(dateordinal-(dateordinal-firstday)%delta);
         return newdate;
 
+    def get_time_window(self,fromdate=None,todate=None): #returns the existing time series values from fromdate to todate
+        """
+        Returns the time series values from fromdate to todate (it does not keep track of the dates, 
+        use for extracting values only). If rounding down or up is impossible inside the data it returns
+        an empty array. If rounding is possible but the range contains no values it returns an empty array.
+        """
+        if not self.wl:
+            return [];
+        fromdate=fromdate if fromdate else self.first_date;
+        todate=todate if todate else self.last_date;
+        
+        try:
+            s=TS.round_date(self, fromdate,roundup=True);
+            s=self.getindex(s);
+            e=TS.round_date(self, todate);
+            e=self.getindex(e);        
+        except KeyError:
+            print(f"range {fromdate} to {todate} is outside of bounds");
+            return [];
+        return [self.wl[i] for i in range(s,e+1)];
+
     def get_time_window_dates(self,fromdate=None,todate=None):
         """
         returns the existing dates from fromdate to todate on the object.
@@ -192,6 +192,31 @@ class TS:
             return [];
         return [self.dates[i] for i in range(s,e+1)];
     
+    def get_values_w_holes(self,fromdate=None,todate=None):
+        
+        fromdate=fromdate if fromdate else self.first_date;
+        todate=todate if todate else self.last_date;
+        values=[];
+        if self.frequency=="daily":
+            oneday=datetime.timedelta(days=1);
+            idate=fromdate;
+            while idate<=todate:
+                try:
+                    values.append(self.getwl(self.getindex(idate)));
+                except KeyError:
+                    values.append(self.getwl(self.getindex(idate)));
+                idate=idate+oneday;
+        else:
+            idate=self._normalize_date(fromdate);
+            last=self._normalize_date(todate);
+            while idate<=last:
+                try:
+                    values.append(self.getwl(self.getindex(idate)));
+                except KeyError:
+                    values.append(None);
+                idate=idate+self.delta(idate);
+        return values;
+
     @staticmethod 
     def round_date(WL,date,roundup=False): #rounds down the date in the array (if possible)
         """
@@ -638,7 +663,10 @@ class TSFilter:
         if WL.frequency=="daily":
             md=TSFilter.missing_dates(WL,WL.first_date,WL.last_date);
             if not md:
-                return (WL.first_date,WL.last_date);
+                x=(WL.first_date,WL.last_date);
+                if runs:
+                    return x,[x];
+                return x;
             leftdate=WL.first_date;
             oneday=datetime.timedelta(days=1);
             cruns=[];
@@ -652,7 +680,10 @@ class TSFilter:
         else:
             md=TSFilter.missing_dates(WL,WL.first_date,WL.last_date);
             if not md:
-                return (WL.first_date,WL.last_date);
+                x=(WL.first_date,WL.last_date);
+                if runs:
+                    return x,[x];
+                return x;
             cruns=[];
             leftdate=WL.first_date;
             for pair in md:
@@ -668,7 +699,7 @@ class TSFilter:
 class TSReader:
     
     @classmethod
-    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y", units="ft"): #reads TS from csvfile
+    def from_csvfile(cls,csvfile,headers=True,dateformat="%m/%d/%Y", units="ft",frequency="daily"): #reads TS from csvfile
         """
         Creates instance of TS class from two column csv file
         
@@ -718,7 +749,7 @@ class TSReader:
                 print(f"There are {m-n} wrong format water levels (possibly missing dates)");
             dates=dates[:n];
             wl=wl[:n];
-            return TS(waterlevels=wl,datesarray=dates,units=units);
+            return TS(waterlevels=wl,datesarray=dates,units=units,frequency=frequency);
 
     @classmethod
     def from_USGS(cls,csvfile,site_code,param_code,dateformat="%m/%d/%Y", units="ft"): #reads TS from csvfile

@@ -14,7 +14,6 @@ def plotTS(WL=None,fromdate=-1,todate=-1, gtype=1,dataname="water levels",custom
     Line plot of water levels time series and histogram from fromdate to todate. If no from or last date provided it
     will use the first and last date from WL. gtype from 1 to 5 to see different styles
     """
-    
     WL=WL if WL else wal.TS();
     if wal.TS.isEmpty(WL):
         fig1,axs1=plt.subplots();
