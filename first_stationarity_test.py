@@ -61,6 +61,7 @@ for file_ in os.listdir(datapath):
         c2.append(adf[4]);
         p2.append(adf[1]);
         kpss=smttools.kpss(final,regression="c", nlags="auto");
+<<<<<<< Updated upstream
         Ts3.append(kpss[0]);
         c3.append(kpss[3]);
         p3.append(kpss[1]);
@@ -68,3 +69,61 @@ for file_ in os.listdir(datapath):
         Ts4.append(kpss[0]);
         c4.append(kpss[3]);
         p4.append(kpss[1]);
+=======
+        p2.append(kpss[1]);
+        kpsst=smttools.kpss(final,regression="ct", nlags="auto");
+        p3.append(kpsst[1]);
+
+bplotdata=[p1,p2,p3]
+fig = plt.figure(figsize =(10, 7))
+ax = fig.add_subplot(111)
+ 
+# Creating axes instance
+bp = ax.boxplot(bplotdata, patch_artist = True, sym="b+",
+                notch =False, vert = 0)
+ 
+colors = ['#ef9a9a', '#9fa8da', '#fff59d']
+ 
+for patch, color in zip(bp['boxes'], colors):
+    patch.set_facecolor(color)
+ 
+# changing color and linewidth of
+# whiskers
+for whisker in bp['whiskers']:
+    whisker.set(color ='#bcbcbc',
+                linewidth = 1,
+                linestyle =":")
+ 
+# changing color and linewidth of
+# caps
+for cap in bp['caps']:
+    cap.set(color ='#f57f17',
+            linewidth = 2)
+ 
+# changing color and linewidth of
+# medians
+for median in bp['medians']:
+    median.set(color ='#616161',
+               linewidth = 2, linestyle=":")
+ 
+# changing style of fliers
+for flier in bp['fliers']:
+    flier.set(marker ='D',
+              color ='#e7298a',
+              alpha = 0.5)
+     
+# x-axis labels
+ax.set_yticklabels(['ADFuller', 'KPSS c',
+                    'KPSS ct'])
+ 
+# Adding title
+plt.title("P values of stationarity test");
+ 
+# Removing top axes and right axes
+# ticks
+ax.get_xaxis().tick_bottom()
+ax.get_yaxis().tick_left()
+     
+# show plot
+plt.show()
+>>>>>>> Stashed changes
