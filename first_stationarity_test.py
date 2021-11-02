@@ -40,7 +40,7 @@ for file_ in os.listdir(datapath):
         #averages of those years
         yaver=wal.TSFilter.averages_from_TS(goodyears, "yearly");
         if not wal.TS.isEmpty(yaver) and yaver.n>30:
-            wplot.plotTS(yaver,gtype=3,dataname=file_[0:len(file_)-4]);
+            #wplot.plotTS(yaver,gtype=3,dataname=file_[0:len(file_)-4]);
             #extract longest continuous run
             lrun,cruns=wal.TSFilter.longest_continuous_run(yaver,True);
             final=yaver.get_time_window(lrun[0],lrun[1]);
@@ -63,20 +63,9 @@ for file_ in os.listdir(datapath):
 
 #Transforming the test values for better representation
 nT=[[],[],[],[]];
-for n in range(2):
+for n in range(4):
     for i in range(len(T[n])):
-        if T[n][i]<c[n][i]["1%"]:
-            x=-1;
-        else:
-            x=((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
-        nT[n].append(x);
-
-for n in range(2,3+1):
-    for i in range(len(T[n])):
-        if T[n][i]>c[n][i]["1%"]:
-            x=-1;
-        else:
-            x=-((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
+        x=((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
         nT[n].append(x);
 
         
@@ -88,40 +77,56 @@ ax = fig.add_subplot(111)
 bp = ax.boxplot(bplotdata, patch_artist = True, sym="b+",
                 notch =False, vert = 0)
  
-colors = ['#ef9a9a', '#9fa8da', '#fff59d']
+colors = ['#ef9a9a50', '#9fa8da50', '#fff59d50',"#81c78450"]
  
 for patch, color in zip(bp['boxes'], colors):
-    patch.set_facecolor(color)
+    patch.set_facecolor(color);
+    patch.set_linestyle("None");
+    
  
 # changing color and linewidth of
 # whiskers
 for whisker in bp['whiskers']:
     whisker.set(color ='#bcbcbc',
                 linewidth = 1,
-                linestyle =":")
+                linestyle =":");
  
 # changing color and linewidth of
 # caps
 for cap in bp['caps']:
     cap.set(color ='#f57f17',
-            linewidth = 2)
+            linewidth = 2);
  
 # changing color and linewidth of
 # medians
 for median in bp['medians']:
     median.set(color ='#616161',
-               linewidth = 2, linestyle=":")
+               linewidth = 2, linestyle=":");
  
-# changing style of fliers
+# changing style of fliers (outliers)
 for flier in bp['fliers']:
-    flier.set(marker ='D',
+    flier.set(marker ='',
               color ='#e7298a',
-              alpha = 0.5)
-     
-# x-axis labels
-ax.set_yticklabels(['ADFuller','ADFuller ct', 
-                    'KPSS c','KPSS ct'])
- 
+              alpha = 0.5);
+
+
+# x,y-axis labels
+
+ax.set_xticks([0.0,1.0]);
+ax.set_xticklabels(["5%","10%"]);
+ax.set_yticklabels(['ADFuller c','ADFuller ct', 
+                    'KPSS c','KPSS ct']);
+yticks=ax.get_yticks(); 
+
+#adding the points to make it more friendly
+for i in range(len(nT)):
+    x = nT[i];
+    y = np.random.normal(yticks[i], 0.06, size=len(x));
+    plt.plot(x, y, 'bo', alpha=0.5);
+
+#adding vertical lines for critical values
+plt.axvline(x=0);
+plt.axvline(x=1);
 # Adding title
 plt.title("Transformed test values");
  
