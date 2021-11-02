@@ -17,19 +17,12 @@ import statsmodels.tsa.stattools as smttools
 
 
 datapath="./data_files/Mississippi_River/";
-#c's are critical values, p's are p-values
-Ts1=[];
-c1=[];
-p1=[];
-Ts2=[];
-c2=[];
-p2=[];
-Ts3=[];
-c3=[];
-p3=[];
-Ts4=[];
-c4=[];
-p4=[];
+#c's are critical values, p's are p-values, T are the test statistic
+
+T=[[],[],[],[]];
+c=[[],[],[],[]];
+p=[[],[],[],[]];
+
 filenames=[];
 N=[];
 for file_ in os.listdir(datapath):
@@ -41,40 +34,53 @@ for file_ in os.listdir(datapath):
         #years with at least a few days every month
         goodyears=wal.TSFilter.years_from_TS(
             WL,
-            years=range(WL.first_date.year,WL.last_date.year+1),
+            years=range(1941,WL.last_date.year+1),
             checkid=2,
             miss_day_tol=25);
         #averages of those years
         yaver=wal.TSFilter.averages_from_TS(goodyears, "yearly");
-        #wplot.plotTS(yaver,gtype=2);
-        #extract longest continuous run
-        lrun,cruns=wal.TSFilter.longest_continuous_run(yaver,True);
-        final=yaver.get_time_window(lrun[0],lrun[1]);
-        N.append(len(final));
-        #augmented Dickie Fuller test
-        adf=smttools.adfuller(final,regression="c");
-        Ts1.append(adf[0]);
-        c1.append(adf[4]);
-        p1.append(adf[1]);
-        adf=smttools.adfuller(final,regression="ct");
-        Ts2.append(adf[0]);
-        c2.append(adf[4]);
-        p2.append(adf[1]);
-        kpss=smttools.kpss(final,regression="c", nlags="auto");
-<<<<<<< Updated upstream
-        Ts3.append(kpss[0]);
-        c3.append(kpss[3]);
-        p3.append(kpss[1]);
-        kpss=smttools.kpss(final,regression="ct", nlags="auto");
-        Ts4.append(kpss[0]);
-        c4.append(kpss[3]);
-        p4.append(kpss[1]);
-=======
-        p2.append(kpss[1]);
-        kpsst=smttools.kpss(final,regression="ct", nlags="auto");
-        p3.append(kpsst[1]);
+        if not wal.TS.isEmpty(yaver) and yaver.n>30:
+            wplot.plotTS(yaver,gtype=3,dataname=file_[0:len(file_)-4]);
+            #extract longest continuous run
+            lrun,cruns=wal.TSFilter.longest_continuous_run(yaver,True);
+            final=yaver.get_time_window(lrun[0],lrun[1]);
+            N.append(len(final));
+            
+            reg=["c","ct"];
+            #augmented Dickie Fuller test
+            for i in range(1+1):
+                adf=smttools.adfuller(final,regression=reg[i%2]);
+                T[i].append(adf[0]);
+                c[i].append(adf[4]);
+                p[i].append(adf[1]);
+            #kpss test   
+            for i in range(2,3+1):
+                kpss=smttools.kpss(final,regression=reg[i%2],nlags="auto");
+                T[i].append(kpss[0]);
+                c[i].append(kpss[3]);
+                p[i].append(kpss[1]);        
+        
 
-bplotdata=[p1,p2,p3]
+#Transforming the test values for better representation
+nT=[[],[],[],[]];
+for n in range(2):
+    for i in range(len(T[n])):
+        if T[n][i]<c[n][i]["1%"]:
+            x=-1;
+        else:
+            x=((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
+        nT[n].append(x);
+
+for n in range(2,3+1):
+    for i in range(len(T[n])):
+        if T[n][i]>c[n][i]["1%"]:
+            x=-1;
+        else:
+            x=-((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
+        nT[n].append(x);
+
+        
+bplotdata=nT;
 fig = plt.figure(figsize =(10, 7))
 ax = fig.add_subplot(111)
  
@@ -113,11 +119,11 @@ for flier in bp['fliers']:
               alpha = 0.5)
      
 # x-axis labels
-ax.set_yticklabels(['ADFuller', 'KPSS c',
-                    'KPSS ct'])
+ax.set_yticklabels(['ADFuller','ADFuller ct', 
+                    'KPSS c','KPSS ct'])
  
 # Adding title
-plt.title("P values of stationarity test");
+plt.title("Transformed test values");
  
 # Removing top axes and right axes
 # ticks
@@ -126,4 +132,3 @@ ax.get_yaxis().tick_left()
      
 # show plot
 plt.show()
->>>>>>> Stashed changes
