@@ -67,7 +67,6 @@ for n in range(4):
     for i in range(len(T[n])):
         x=((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
         nT[n].append(x);
-
         
 bplotdata=nT;
 fig = plt.figure(figsize =(10, 7))
@@ -111,16 +110,15 @@ for flier in bp['fliers']:
 
 
 # x,y-axis labels
-
 ax.set_xticks([0.0,1.0]);
 ax.set_xticklabels(["5%","10%"]);
 ax.set_yticklabels(['ADFuller c','ADFuller ct', 
                     'KPSS c','KPSS ct']);
-yticks=ax.get_yticks(); 
 
 #adding the points to make it more friendly
+yticks=ax.get_yticks(); 
 for i in range(len(nT)):
-    x = nT[i];
+    x = bplotdata[i];
     y = np.random.normal(yticks[i], 0.06, size=len(x));
     plt.plot(x, y, 'bo', alpha=0.5);
 
