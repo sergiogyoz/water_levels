@@ -18,11 +18,9 @@ import statsmodels.tsa.stattools as smttools
 
 datapath="./data_files/Mississippi_River/";
 #c's are critical values, p's are p-values, T are the test statistic
-
 T=[[],[],[],[]];
 c=[[],[],[],[]];
 p=[[],[],[],[]];
-
 filenames=[];
 N=[];
 for file_ in os.listdir(datapath):
@@ -63,75 +61,103 @@ for file_ in os.listdir(datapath):
 
 #Transforming the test values for better representation
 nT=[[],[],[],[]];
+c1percent=[];
+def linear5to10(TestStat,n,i):
+    """linear transformation using 5% and 10% as the fix points"""
+    x=((TestStat-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
+    return x;
 for n in range(4):
     for i in range(len(T[n])):
-        x=((T[n][i]-c[n][i]["5%"]) / (c[n][i]["10%"]-c[n][i]["5%"]));
+        x=linear5to10(T[n][i], n, i);
+        c1percent.append( linear5to10(c[n][i]["1%"], n, i) );
         nT[n].append(x);
-        
-bplotdata=nT;
-fig = plt.figure(figsize =(10, 7))
-ax = fig.add_subplot(111)
- 
-# Creating axes instance
-bp = ax.boxplot(bplotdata, patch_artist = True, sym="b+",
-                notch =False, vert = 0)
- 
-colors = ['#ef9a9a50', '#9fa8da50', '#fff59d50',"#81c78450"]
- 
-for patch, color in zip(bp['boxes'], colors):
-    patch.set_facecolor(color);
-    patch.set_linestyle("None");
-    
- 
-# changing color and linewidth of
-# whiskers
-for whisker in bp['whiskers']:
-    whisker.set(color ='#bcbcbc',
-                linewidth = 1,
-                linestyle =":");
- 
-# changing color and linewidth of
-# caps
-for cap in bp['caps']:
-    cap.set(color ='#f57f17',
-            linewidth = 2);
- 
-# changing color and linewidth of
-# medians
-for median in bp['medians']:
-    median.set(color ='#616161',
-               linewidth = 2, linestyle=":");
- 
-# changing style of fliers (outliers)
-for flier in bp['fliers']:
-    flier.set(marker ='',
-              color ='#e7298a',
-              alpha = 0.5);
 
-
-# x,y-axis labels
-ax.set_xticks([0.0,1.0]);
-ax.set_xticklabels(["5%","10%"]);
-ax.set_yticklabels(['ADFuller c','ADFuller ct', 
-                    'KPSS c','KPSS ct']);
-
-#adding the points to make it more friendly
-yticks=ax.get_yticks(); 
-for i in range(len(nT)):
-    x = bplotdata[i];
-    y = np.random.normal(yticks[i], 0.06, size=len(x));
-    plt.plot(x, y, 'bo', alpha=0.5);
-
-#adding vertical lines for critical values
-plt.axvline(x=0);
-plt.axvline(x=1);
-# Adding title
-plt.title("Transformed test values");
- 
-# Removing top axes and right axes
-# ticks
-ax.get_xaxis().tick_bottom()
-ax.get_yaxis().tick_left()
+def myboxplot(bplotdata,xticks,xtickslabels,vertline,xlimits=[],title=""):
+    """my custom boxplot function for p values or transformed T statistics"""
+    fig = plt.figure(figsize =(10, 7))
+    ax = fig.add_subplot(111)
      
-# show plot
-plt.show()
+    # Creating axes instance
+    bp = ax.boxplot(bplotdata, patch_artist = True, sym="b+",
+                    notch =False, vert = 0)
+     
+    colors = ['#ef9a9a50', '#9fa8da50', '#fff59d50',"#81c78450"]
+     
+    for patch, color in zip(bp['boxes'], colors):
+        patch.set_facecolor(color);
+        patch.set_linestyle("None");
+         
+    # changing color and linewidth of
+    # whiskers
+    for whisker in bp['whiskers']:
+        whisker.set(color ='#bcbcbc',
+                    linewidth = 1,
+                    linestyle =":");
+     
+    # changing color and linewidth of
+    # caps
+    for cap in bp['caps']:
+        cap.set(color ='#f57f17',
+                linewidth = 2);
+     
+    # changing color and linewidth of
+    # medians
+    for median in bp['medians']:
+        median.set(color ='#616161',
+                   linewidth = 2, linestyle=":");
+     
+    # changing style of fliers (outliers)
+    for flier in bp['fliers']:
+        flier.set(marker ='',
+                  color ='#e7298a',
+                  alpha = 0.5);
+        
+    # x,y-axis labels
+    ax.set_xticks(xticks);
+    ax.set_xticklabels(xtickslabels);
+    ax.set_yticklabels(['ADFuller c','ADFuller ct', 
+                        'KPSS c','KPSS ct']);
+    
+    #adding the points to make it more friendly
+    yticks=ax.get_yticks(); 
+    for i in range(len(nT)):
+        x = bplotdata[i];
+        y = np.random.normal(yticks[i], 0.06, size=len(x));
+        plt.plot(x, y, 'bo', alpha=0.5);
+    
+    #adding vertical lines for critical values
+    for val in vertline:
+        plt.axvline(x=val);
+    # Adding title
+    plt.title(title);
+     
+    # Removing top axes and right axes ticks
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+    
+    #x axis display limits
+    if xlimits:
+        ax.set_xlim(xlimits);
+    # show plot
+    plt.show()
+    return fig, ax;
+
+fig1,ax1=myboxplot(nT,
+          [sum(c1percent)/len(c1percent),0.0,1.0],
+          ["~1%" ,"5%","10%"],
+          [0,1,sum(c1percent)/len(c1percent)],
+          [],
+          "Transformed test statistic values at "+str(len(nT[0]))+" locations");
+
+ax1.set_xlabel("p-values");
+ax1.set_ylabel("different tests");
+
+"""myboxplot(p,
+          [0,0.01,0.05,0.1],
+          ["0%","1%","5%","10%"],
+          [],
+          [-0.015,0.115],
+          "p values");"""
+
+
+
