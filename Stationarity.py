@@ -1,4 +1,7 @@
 import numpy as np
+import math
+import random
+import time
 import watlevpy.time_series as wal #base class for time series
 from scipy import stats #for stats testing
 
@@ -11,8 +14,9 @@ a=[1,2,3,4,5,6];
 b=[10,9,8,7,6,5,4,3,2,1];
 c=[1,12,13,5,3,4,6,15,16,11,21,23,-1,9,8,2,-11];
 d=[2,1,4,3];
-e=[1,1,1,1,1,1,1,1,1,1];
+e=[1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,3];
 f=[1,5,9,4,3,58,1,3,5,6,1,84,6,4,4,1,1,3,2,5,1,1];
+g=[random.randint(0,9) for i in range(0,10**6)];
 
 def _merge_join(l,r):
     s=0;#well ordered minus inversions
@@ -81,34 +85,46 @@ def MergeSort(arr,l=0,k=-1):
         arr[l:k+1]=sort_arr;
         return s;     
 
-def MannKendall(TS,equaltol=0,otherparameters=[]):
-    """"""
-    n=TS.n;
-    s=0;
-    for i in range(0,n-1):
-        for j in range(i+1,n):
-            s=s+np.sign(TS.getwl(j)-TS.getwl(i));
-    print(s);
-    tp=[0]*20;
-    for val in TS.wl:
-        tp[int(val)]=tp[int(val)]+1;
-        
-    kvar=n*(n-1)*(2*n+5);
-    for t in tp:
-        kvar=kvar-t*(t-1)*(2*t+5);
-    kvar=kvar/18;
+def MannKendall(arr):
+    """
+    One sided Mann-Kendall test returns a p-value and the corresponding Z statistic. 
+    Runs in O( n ln(n) ).
+    """
+    copy=arr[:];
+    S=MergeSort(copy);
+    n=len(arr);
     
+    def count_ties_in_sorted_array(a):
+        tp=[];
+        i=0;
+        while i<len(a):
+            counter=0;
+            c=a[i];
+            while a[i]==c:
+                counter+=1;
+                i+=1;
+                if not i<len(a):
+                    break;
+            if counter>1:
+                tp.append(counter);
+        return tp;
+    tp=count_ties_in_sorted_array(copy);
+    
+    VarS=n*(n-1)*(2*n+5);
+    for k in tp:
+        VarS=VarS-k*(k-1)*(2*k+5);
+    VarS=VarS/18;
+    
+    Z=0;
     #continuity correction
-    if s>0:
-        Z= (s-1)/np.sqrt(kvar) 
-    elif s<0:
-        Z= (s+1)/np.sqrt(kvar);
-    elif s==0:
-        Z= 0;
-    #p-value
+    if S>0:
+        Z=(S-1)/math.sqrt(VarS);
+    elif S<0:
+        Z=(S+1)/math.sqrt(VarS);
+    elif S==0:
+        Z=0;
     p_val=stats.norm.sf(abs(Z));
     return p_val,Z;
-    
 
 def bruteforce(arr):
     n=len(arr);
@@ -118,12 +134,13 @@ def bruteforce(arr):
             s=s+np.sign(arr[j]-arr[i]);
     return(s);
 
+test_arr=g[:];
 
-test_arr=f;
-s_real=bruteforce(test_arr);
-s=MergeSort(test_arr);
-
-#t=list(range(kdata.n));
-#tau, kp_val= stats.kendalltau(t, kdata.wl);
+t0=time.perf_counter();
+t=list(range(len(test_arr)));
+Z2, p2= stats.kendalltau(t, test_arr);
+t2=time.perf_counter()-t0;
 #--------------------
-
+t0=time.perf_counter();
+p1,Z1=MannKendall(test_arr);
+t1=time.perf_counter()-t0;
