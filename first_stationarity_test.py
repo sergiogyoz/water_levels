@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import os
+import csv
 #base class for time series
 import watlevpy.time_series as wal 
 #for plotting
@@ -21,14 +22,15 @@ datapath="./data_files/Mississippi_River/";
 T=[[],[],[],[]];
 c=[[],[],[],[]];
 p=[[],[],[],[]];
+p_MK=[];
 filenames=[];
 N=[];
+
 for file_ in os.listdir(datapath):
     if file_.endswith(".csv"):
         #reading csv file
         WL=wal.TSReader.from_csvfile(
             csvfile=datapath+file_,headers=True,dateformat="%m/%d/%Y %H:%M");
-        filenames.append(file_);
         #years with at least a few days every month
         goodyears=wal.TSFilter.years_from_TS(
             WL,
@@ -37,12 +39,19 @@ for file_ in os.listdir(datapath):
             miss_day_tol=25);
         #averages of those years
         yaver=wal.TSFilter.averages_from_TS(goodyears, "yearly");
-        if not wal.TS.isEmpty(yaver) and yaver.n>30:
-            #wplot.plotTS(yaver,gtype=3,dataname=file_[0:len(file_)-4]);
+        if not wal.TS.isEmpty(yaver) and yaver.n>30: #only data with over 30 years
+            filenames.append(file_[0:len(file_)-4]);
+            #plot
+            wplot.plotTS(yaver,gtype=3,dataname=file_[0:len(file_)-4]); 
             #extract longest continuous run
             lrun,cruns=wal.TSFilter.longest_continuous_run(yaver,True);
             final=yaver.get_time_window(lrun[0],lrun[1]);
             N.append(len(final));
+
+            #Mann-Kendall test
+            t=list(range(len(final)));
+            tau, p_tau= stats.kendalltau(t, final,variant="c");
+            p_MK.append(p_tau);
             
             reg=["c","ct"];
             #augmented Dickie Fuller test
@@ -57,6 +66,28 @@ for file_ in os.listdir(datapath):
                 T[i].append(kpss[0]);
                 c[i].append(kpss[3]);
                 p[i].append(kpss[1]);        
+            
+
+#write csv file for table of p values at each location
+with open('p_values_at_locations.csv',newline='',mode='w') as myfile:
+    writer = csv.writer(myfile)
+    writer.writerow(["name","N","MK","ADFuller c","KPSS c","ADFuller ct","KPSS ct", "trend", "stationarity supported by"]);
+    for i in range(len(N)):
+        trend="c";
+        if p_MK[i]<0.05: #if we reject trend is not constant
+            trend="ct"; #we assume linear for further testing
+        
+        support=0;
+        ind=0; # 0 and 2 constant
+        if trend=="ct":
+            ind=1; #1 and 3 linear
+        reject_unit_root=(p[ind][i]<=0.05);
+        stationarity=(p[ind+2][i]>=0.05);
+        support=int(reject_unit_root)+int(stationarity);
+        
+        
+        row=[filenames[i],N[i],p_MK[i],p[0][i],p[2][i],p[1][i],p[3][i],trend,support];
+        writer.writerow(row);
         
 
 #Transforming the test values for better representation
