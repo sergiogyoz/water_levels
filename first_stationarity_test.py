@@ -39,7 +39,8 @@ for file_ in os.listdir(datapath):
             miss_day_tol=25);
         #averages of those years
         yaver=wal.TSFilter.averages_from_TS(goodyears, "yearly");
-        if not wal.TS.isEmpty(yaver) and yaver.n>30: #only data with over 30 years
+        #we apply the test to only data with over 30 years
+        if not wal.TS.isEmpty(yaver) and yaver.n>30: 
             filenames.append(file_[0:len(file_)-4]);
             #plot
             wplot.plotTS(yaver,gtype=3,dataname=file_[0:len(file_)-4]); 
@@ -183,12 +184,6 @@ fig1,ax1=myboxplot(nT,
 ax1.set_xlabel("p-values");
 ax1.set_ylabel("different tests");
 
-"""myboxplot(p,
-          [0,0.01,0.05,0.1],
-          ["0%","1%","5%","10%"],
-          [],
-          [-0.015,0.115],
-          "p values");"""
 
 
 
